@@ -52,25 +52,20 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
-  # Cấu hình JSON chuẩn cho API
-  jackson:
-    date-format: yyyy-MM-dd HH:mm:ss
-    time-zone: Asia/Ho_Chi_Minh
-    default-property-inclusion: non_null
 
-# --- Custom Properties ---
+# Custom Properties
+app:
+  # JWT
+  jwt:
+    secret: ${JWT_SECRET}
+    access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}    # 15 phút
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} # 7 ngày
 
-# JWT
-jwt:
-  secret: ${JWT_SECRET}
-  access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}    # 15 phút
-  refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} # 7 ngày
-
-# OTP
-otp:
-  expiry-minutes: ${OTP_EXPIRY_MINUTES:5}
-  length: ${OTP_LENGTH:6}
-  max-attempts: ${OTP_MAX_ATTEMPTS:3}
+  # OTP
+  otp:
+    expiry-minutes: ${OTP_EXPIRY_MINUTES:5}
+    length: ${OTP_LENGTH:6}
+    max-attempts: ${OTP_MAX_ATTEMPTS:3}
 
 # Notification Services
 notification:
