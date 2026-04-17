@@ -35,6 +35,15 @@ public class ApiResponse<T> {
                 .build();
     }
 
+    public static <T> ApiResponse<T> ok(T data, String message) {
+    return ApiResponse.<T>builder()
+            .success(true)
+            .code(200)
+            .message(message)
+            .data(data)
+            .build();
+}
+
     /**
      * Spring Data Page
      */
@@ -69,6 +78,25 @@ public class ApiResponse<T> {
                 .code(errorCode.getCode())
                 .message(errorCode.getMessage())
                 .errors(errors)
+                .build();
+    }
+
+    /** Puts custom message in the message field (e.g. custom BusinessException messages). */
+    public static <T> ApiResponse<T> error(ErrorCode errorCode, String message) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .code(errorCode.getCode())
+                .message(message)
+                .errors(null)
+                .build();
+    }
+
+    /** Convenience overload — uses code 0 for non-standard error messages. */
+    public static <T> ApiResponse<T> error(String message) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .code(0)
+                .message(message)
                 .build();
     }
 

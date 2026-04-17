@@ -6,23 +6,34 @@ import java.util.UUID;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 
-
+/**
+ * Base class for all domain entities that need audit fields.
+ *
+ * <p>The {@code createdBy} / {@code updatedBy} fields store the actor's UUID,
+ * matching the JPA entity type for consistency across layers.
+ */
 public abstract class AuditableEntity {
 
     private final UUID id;
 
     private Instant createdAt;
     private Instant updatedAt;
-    private String createdBy;
-    private String updatedBy;
+    private UUID createdBy;
+    private UUID updatedBy;
 
-    // Constructor
+    // ── Constructors ────────────────────────────────────────────────────────────
+
+    /** Default constructor — generates a time-ordered UUID as id. */
     protected AuditableEntity() {
         this.id = UuidCreator.getTimeOrderedEpoch();
     }
 
-
-    protected AuditableEntity(UUID id, Instant createdAt, Instant updatedAt, String createdBy, String updatedBy) {
+    /**
+     * Full constructor for reconstitution from persistence.
+     * All parameters are non-null (IDs must be present in stored entities).
+     */
+    protected AuditableEntity(UUID id, Instant createdAt, Instant updatedAt,
+                             UUID createdBy, UUID updatedBy) {
         this.id = Objects.requireNonNull(id, "ID must not be null");
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -30,37 +41,28 @@ public abstract class AuditableEntity {
         this.updatedBy = updatedBy;
     }
 
-    public UUID getId() {
-        return id;
-    }
+    // ── Getters ────────────────────────────────────────────────────────────────
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
+    public UUID getId() { return id; }
+    public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
+    public UUID getCreatedBy() { return createdBy; }
+    public UUID getUpdatedBy() { return updatedBy; }
 
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
+    public void setUpdateAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+    public void setUpdatedBy(UUID updatedBy)    { this.updatedBy = updatedBy; }
+    public void setCreatedAt(Instant createdAt)  { this.createdAt = createdAt; }
+    public void setCreatedBy(UUID createdBy)    { this.createdBy = createdBy; }
 
-    public String getCreatedBy() {
-        return createdBy;
-    }
+    // ── Domain logic ────────────────────────────────────────────────────────────
 
-    public String getUpdatedBy() {
-        return updatedBy;
-    }
-
-
-    // Domain logic
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof AuditableEntity that)) return false;
-        return Objects.equals(id, that.id);
+        return o instanceof AuditableEntity that
+                && Objects.equals(id, that.id);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+    public int hashCode() { return Objects.hash(id); }
 }
