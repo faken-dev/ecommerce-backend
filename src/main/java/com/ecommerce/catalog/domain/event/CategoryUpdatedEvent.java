@@ -1,0 +1,6 @@
+package com.ecommerce.catalog.domain.event;
+
+import java.time.Instant;
+import java.util.UUID;
+
+public record CategoryUpdatedEvent(UUID categoryId, Instant occurredAt) {}
