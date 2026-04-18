@@ -34,11 +34,14 @@ public class AppProperties {
     public static class Otp {
         @Positive
         private int expiryMinutes;
-        
+
         @Positive
         private int length;
-        
+
         @Positive
         private int maxAttempts;
+
+        @NotBlank(message = "OTP HMAC secret must be configured via OTP_HMAC_SECRET env var")
+        private String hmacSecret;
     }
 }
