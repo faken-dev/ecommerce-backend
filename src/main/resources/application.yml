@@ -93,6 +93,10 @@ app:
     admin-email: ${ADMIN_BOOTSTRAP_EMAIL:}
     admin-password: ${ADMIN_BOOTSTRAP_PASSWORD:}
 
+  # Allow configuring CORS allowed origins via environment variable (comma-separated)
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
 # Notification Services
 notification:
   sendgrid:
