@@ -1,4 +1,4 @@
-package com.ecommerce.auth.infrastructure.redis;
+package com.ecommerce.auth.infrastructure.security;
 
 import com.ecommerce.auth.application.port.SpamProtection;
 import com.ecommerce.auth.domain.entity.OtpToken;
@@ -52,7 +52,7 @@ public class RedisSpamProtection implements SpamProtection {
         return "otp:block:" + userId;
     }
 
-    // ── Helper: get TTL (trả về -1 nếu key không tồn tại) ─────────────
+    // ── Helper: get TTL ─────────────
 
     private long getTtl(String key) {
         Long ttl = redisTemplate.getExpire(key);
@@ -123,7 +123,6 @@ public class RedisSpamProtection implements SpamProtection {
         String key = dailyKey(userId, purpose);
         Long count = redisTemplate.opsForValue().increment(key);
         if (count == null) count = 0L;
-        // Key expires lúc nửa đêm → tính đúng số giây
         redisTemplate.expire(key, Duration.ofSeconds(secondsUntilMidnight()));
         return count.intValue();
     }
@@ -139,7 +138,7 @@ public class RedisSpamProtection implements SpamProtection {
         return exists != null && exists;
     }
 
-    // ── Helper: tính giây đến nửa đêm ─────────────────────────────
+    // ── Helper ─────────────────────────────
 
     private long secondsUntilMidnight() {
         ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());

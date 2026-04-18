@@ -1,7 +1,7 @@
-package com.ecommerce.auth.infrastructure.redis;
+package com.ecommerce.auth.infrastructure.security;
 
 import com.ecommerce.auth.application.port.TokenBlacklistService;
-import com.ecommerce.auth.infrastructure.security.TokenHasher;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -28,7 +28,7 @@ public class RedisTokenBlacklistService implements TokenBlacklistService {
     @Override
     public void blacklist(String accessToken, long ttlMs) {
         if (ttlMs <= 0) {
-            return; // Token đã hết hạn → không cần blacklist
+            return;
         }
         String tokenHash = tokenHasher.hash(accessToken);
         String key = BLACKLIST_PREFIX + tokenHash;
