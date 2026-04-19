@@ -1,4 +1,4 @@
--- V7__user_create_addresses.sql
+-- V6__user_create_addresses.sql
 -- User shipping addresses with default-address support
 
 CREATE TABLE addresses (
