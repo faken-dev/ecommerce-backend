@@ -85,7 +85,7 @@ public class User extends AuditableEntity {
     }
 
     @Builder
-    public User(java.util.UUID id, Email email, PhoneNumber phoneNumber, String fullName,
+    public User(UUID id, Email email, PhoneNumber phoneNumber, String fullName,
                 HashedPassword passwordHash, boolean active, boolean emailVerified,
                 boolean phoneVerified, boolean otpBlocked, Instant otpBlockedAt,
                 String otpBlockedReason, OAuth2Provider provider, String providerUserId,

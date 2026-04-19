@@ -10,6 +10,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -57,9 +59,9 @@ public class NotificationDlqRepository {
     /**
      * Read all entries from DLQ for admin review.
      */
-    public java.util.List<DlqEntry> findAll() {
+    public List<DlqEntry> findAll() {
         var ids = redisTemplate.opsForZSet().range(DLQ_SET_KEY, 0, -1);
-        if (ids == null || ids.isEmpty()) return java.util.List.of();
+        if (ids == null || ids.isEmpty()) return List.of();
 
         return ids.stream()
                 .map(id -> {
@@ -71,7 +73,7 @@ public class NotificationDlqRepository {
                         return null;
                     }
                 })
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .toList();
     }
 
