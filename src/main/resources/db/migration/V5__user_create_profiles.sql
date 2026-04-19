@@ -1,4 +1,4 @@
--- V6__user_create_profiles.sql
+-- V5__user_create_profiles.sql
 -- User profile extension: bio, avatar, date of birth, default shipping address
 
 CREATE TABLE user_profiles (
