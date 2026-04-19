@@ -1,0 +1,39 @@
+package com.ecommerce.catalog.presentation.dto.request;
+
+import jakarta.validation.constraints.*;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Presentation-layer request to create a new product.
+ * Seller ID is enforced from JWT token, not from this request.
+ */
+public record CreateProductRequest(
+        @NotBlank(message = "Product name is required")
+        @Size(max = 300, message = "Name must be at most 300 characters")
+        String name,
+
+        @NotBlank(message = "Slug is required")
+        @Size(max = 350, message = "Slug must be at most 350 characters")
+        String slug,
+
+        String description,
+
+        @NotNull(message = "Price is required")
+        @DecimalMin(value = "0", message = "Price cannot be negative")
+        BigDecimal price,
+
+        BigDecimal compareAtPrice,
+        BigDecimal costPerItem,
+        String sku,
+        String barcode,
+        UUID categoryId,
+        List<String> tags,
+        String visibility,
+        String metaTitle,
+        String metaDescription,
+        BigDecimal weightKg,
+        String weightUnit
+) {}
