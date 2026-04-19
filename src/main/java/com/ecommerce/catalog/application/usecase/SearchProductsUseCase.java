@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -21,10 +22,10 @@ public class SearchProductsUseCase {
     private final CatalogApplicationMapper mapper;
 
     @Transactional(readOnly = true)
-    public ApiResponse<java.util.List<ProductSummaryResponse>> search(String query, int page, int size) {
+    public ApiResponse<List<ProductSummaryResponse>> search(String query, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<com.ecommerce.catalog.domain.entity.Product> result = productRepository.searchByQuery(query, pageable);
-        return ApiResponse.<java.util.List<ProductSummaryResponse>>builder()
+        return ApiResponse.<List<ProductSummaryResponse>>builder()
                 .success(true)
                 .code(200)
                 .message("Search results")
@@ -39,10 +40,10 @@ public class SearchProductsUseCase {
     }
 
     @Transactional(readOnly = true)
-    public ApiResponse<java.util.List<ProductSummaryResponse>> byCategory(UUID categoryId, int page, int size) {
+    public ApiResponse<List<ProductSummaryResponse>> byCategory(UUID categoryId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<com.ecommerce.catalog.domain.entity.Product> result = productRepository.findByCategory(categoryId, pageable);
-        return ApiResponse.<java.util.List<ProductSummaryResponse>>builder()
+        return ApiResponse.<List<ProductSummaryResponse>>builder()
                 .success(true)
                 .code(200)
                 .message("Products by category")
@@ -57,10 +58,10 @@ public class SearchProductsUseCase {
     }
 
     @Transactional(readOnly = true)
-    public ApiResponse<java.util.List<ProductSummaryResponse>> bySeller(UUID sellerId, int page, int size) {
+    public ApiResponse<List<ProductSummaryResponse>> bySeller(UUID sellerId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<com.ecommerce.catalog.domain.entity.Product> result = productRepository.findBySeller(sellerId, pageable);
-        return ApiResponse.<java.util.List<ProductSummaryResponse>>builder()
+        return ApiResponse.<List<ProductSummaryResponse>>builder()
                 .success(true)
                 .code(200)
                 .message("Products by seller")
@@ -75,10 +76,10 @@ public class SearchProductsUseCase {
     }
 
     @Transactional(readOnly = true)
-    public ApiResponse<java.util.List<ProductSummaryResponse>> activePublic(int page, int size) {
+    public ApiResponse<List<ProductSummaryResponse>> activePublic(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<com.ecommerce.catalog.domain.entity.Product> result = productRepository.findActivePublic(pageable);
-        return ApiResponse.<java.util.List<ProductSummaryResponse>>builder()
+        return ApiResponse.<List<ProductSummaryResponse>>builder()
                 .success(true)
                 .code(200)
                 .message("Active products")

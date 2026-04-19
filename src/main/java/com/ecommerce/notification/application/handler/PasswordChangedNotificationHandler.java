@@ -13,6 +13,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 /**
  * Sends a security notification email when the user changes their password.
@@ -44,7 +45,7 @@ public class PasswordChangedNotificationHandler {
                 .to(event.email())
                 .subject(subject)
                 .templateName(NotificationTemplate.PASSWORD_CHANGED_EMAIL.getTemplateName())
-                .variables(java.util.Map.of(
+                .variables(Map.of(
                         "fullName", event.fullName(),
                         "changedAt", DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' HH:mm")
                                 .format(event.occurredAt().atZone(java.time.ZoneId.systemDefault())

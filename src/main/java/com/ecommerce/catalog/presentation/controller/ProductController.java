@@ -21,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -50,17 +51,17 @@ public class ProductController {
         summary = "List active public products (paginated)",
         description = "Returns active products visible to shoppers, ordered by featured first."
     )
-    public ResponseEntity<ApiResponse<java.util.List<ProductSummaryResponse>>> listActivePublic(
+    public ResponseEntity<ApiResponse<List<ProductSummaryResponse>>> listActivePublic(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        ApiResponse<java.util.List<ProductSummaryResponse>> result =
+        ApiResponse<List<ProductSummaryResponse>> result =
                 searchProductsUseCase.activePublic(page, size);
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/public/search")
     @Operation(summary = "Search products by name or description")
-    public ResponseEntity<ApiResponse<java.util.List<ProductSummaryResponse>>> search(
+    public ResponseEntity<ApiResponse<List<ProductSummaryResponse>>> search(
             @RequestParam String q,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -69,7 +70,7 @@ public class ProductController {
 
     @GetMapping("/public/category/{categoryId}")
     @Operation(summary = "List active products by category")
-    public ResponseEntity<ApiResponse<java.util.List<ProductSummaryResponse>>> byCategory(
+    public ResponseEntity<ApiResponse<List<ProductSummaryResponse>>> byCategory(
             @PathVariable UUID categoryId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -130,7 +131,7 @@ public class ProductController {
     @GetMapping("/me")
     @PreAuthorize("hasAuthority('product:read')")
     @Operation(summary = "List my products (seller dashboard)")
-    public ResponseEntity<ApiResponse<java.util.List<ProductSummaryResponse>>> myProducts(
+    public ResponseEntity<ApiResponse<List<ProductSummaryResponse>>> myProducts(
             @AuthenticationPrincipal UUID sellerId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
