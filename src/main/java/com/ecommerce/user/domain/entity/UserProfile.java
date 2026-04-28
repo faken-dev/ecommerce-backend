@@ -92,7 +92,6 @@ public class UserProfile extends AuditableEntity {
         return profilePictureUrl != null && !profilePictureUrl.isEmpty();
     }
 
-
     public boolean isProfileCompleted() {
         return fullName != null
                 && gender != null
