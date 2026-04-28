@@ -37,7 +37,6 @@ public class RefreshTokenJpaEntity extends AuditableJpaEntity {
     /**
      * Generation within the token family.
      * Starts at 1. Incremented on each successful refresh.
-     * Used for replay attack detection: if token.generation < family.current → attack.
      */
     @Column(nullable = false)
     @Builder.Default

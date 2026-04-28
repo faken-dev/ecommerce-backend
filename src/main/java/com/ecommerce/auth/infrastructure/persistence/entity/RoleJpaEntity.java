@@ -36,7 +36,6 @@ public class RoleJpaEntity extends AuditableJpaEntity {
     @Builder.Default
     private Set<PermissionJpaEntity> permissions = new HashSet<>();
 
-    /** Soft-delete timestamp. Null = active record. */
     @Column(name = "deleted_at")
     private Instant deletedAt;
 }

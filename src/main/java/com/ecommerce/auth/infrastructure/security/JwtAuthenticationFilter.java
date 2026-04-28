@@ -1,5 +1,7 @@
 package com.ecommerce.auth.infrastructure.security;
 
+import com.ecommerce.shared.infrastructure.security.AuthenticatedUser;
+
 import com.ecommerce.auth.application.port.TokenBlacklistService;
 import com.ecommerce.shared.exception.ErrorCode;
 import com.ecommerce.shared.response.ApiResponse;
@@ -11,7 +13,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -30,10 +31,11 @@ import java.util.UUID;
  * raw {@code StringRedisTemplate} — respects Dependency Inversion Principle.
  * The concrete implementation ({@code RedisTokenBlacklistService}) handles the Redis details.
  */
-@Slf4j
+
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistService tokenBlacklistService;
@@ -63,7 +65,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Claims claims = jwtTokenProvider.parseAccessToken(token);
                 UUID userId = UUID.fromString(claims.getSubject());
 
-                // 3. Extract Permissions (Authorities)
+                // 3. Extract Info
+                String email = claims.get("email", String.class);
+                String fullName = claims.get("fullName", String.class);
+
+                // 4. Extract Permissions (Authorities)
                 @SuppressWarnings("unchecked")
                 List<String> permissions = claims.get("permissions", List.class);
 
@@ -71,8 +77,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         ? permissions.stream().map(SimpleGrantedAuthority::new).toList()
                         : List.of();
 
-                // 4. Set SecurityContext
-                var authentication = new UsernamePasswordAuthenticationToken(userId, null, authorities);
+                // 5. Set SecurityContext
+                AuthenticatedUser authenticatedUser = AuthenticatedUser.builder()
+                        .id(userId)
+                        .email(email)
+                        .fullName(fullName)
+                        .build();
+
+                var authentication = new UsernamePasswordAuthenticationToken(authenticatedUser, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } catch (JwtException | IllegalArgumentException e) {
