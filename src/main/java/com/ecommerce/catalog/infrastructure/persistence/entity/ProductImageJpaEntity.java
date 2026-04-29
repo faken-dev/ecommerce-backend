@@ -26,7 +26,8 @@ public class ProductImageJpaEntity extends AuditableJpaEntity {
     private String altText;
 
     @Column(name = "sort_order", nullable = false)
-    private int sortOrder;
+    @Builder.Default
+    private int sortOrder = 0;
 
     private Integer width;
     private Integer height;
@@ -35,5 +36,6 @@ public class ProductImageJpaEntity extends AuditableJpaEntity {
     private Integer fileSizeKb;
 
     @Column(name = "is_primary", nullable = false)
-    private boolean primary;
+    @Builder.Default
+    private boolean primary = false;
 }

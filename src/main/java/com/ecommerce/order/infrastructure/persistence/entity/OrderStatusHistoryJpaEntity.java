@@ -7,6 +7,9 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "orders_status_history")
 @Getter
@@ -35,5 +38,21 @@ public class OrderStatusHistoryJpaEntity extends AuditableJpaEntity {
     private String reason;
 
     @Column(columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String metadata;
+
+    public UUID getOrderId() { return orderId; }
+    public void setOrderId(UUID orderId) { this.orderId = orderId; }
+    public String getFromStatus() { return fromStatus; }
+    public void setFromStatus(String fromStatus) { this.fromStatus = fromStatus; }
+    public String getToStatus() { return toStatus; }
+    public void setToStatus(String toStatus) { this.toStatus = toStatus; }
+    public UUID getChangedBy() { return changedBy; }
+    public void setChangedBy(UUID changedBy) { this.changedBy = changedBy; }
+    public String getChangedByRole() { return changedByRole; }
+    public void setChangedByRole(String changedByRole) { this.changedByRole = changedByRole; }
+    public String getReason() { return reason; }
+    public void setReason(String reason) { this.reason = reason; }
+    public String getMetadata() { return metadata; }
+    public void setMetadata(String metadata) { this.metadata = metadata; }
 }
