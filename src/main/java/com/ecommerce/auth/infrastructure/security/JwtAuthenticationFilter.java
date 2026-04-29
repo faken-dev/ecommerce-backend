@@ -13,6 +13,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -25,17 +27,17 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * JWT authentication filter — validates access tokens and sets the SecurityContext.
+ * JWT authentication filter Ă„â€Ă‚Â¢Ä‚Â¢Ă¢â‚¬ÂĂ‚Â¬Ä‚Â¢Ă¢â€Â¬Ă‚Â validates access tokens and sets the SecurityContext.
  *
  * <p>Blacklist check uses {@link TokenBlacklistService} (application port) instead of
- * raw {@code StringRedisTemplate} — respects Dependency Inversion Principle.
+ * raw {@code StringRedisTemplate} Ă„â€Ă‚Â¢Ä‚Â¢Ă¢â‚¬ÂĂ‚Â¬Ä‚Â¢Ă¢â€Â¬Ă‚Â respects Dependency Inversion Principle.
  * The concrete implementation ({@code RedisTokenBlacklistService}) handles the Redis details.
  */
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistService tokenBlacklistService;
@@ -114,3 +116,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
     }
 }
+
+
+
