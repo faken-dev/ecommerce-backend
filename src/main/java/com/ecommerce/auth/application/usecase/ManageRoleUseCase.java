@@ -69,7 +69,7 @@ public class ManageRoleUseCase {
 
     @Transactional
     public void deleteRole(UUID roleId, UUID deletedBy) {
-        Role role = roleRepository.findById(roleId)
+        roleRepository.findById(roleId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_ROLE_NOT_FOUND));
         roleRepository.deleteById(roleId, deletedBy);
     }

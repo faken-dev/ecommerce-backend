@@ -18,7 +18,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -36,32 +38,54 @@ public class VerifyOtpUseCase {
 
     @Transactional
     public VerifyOtpResponse execute(VerifyOtpCommand command) {
+        return execute(command, false);
+    }
+
+    @Transactional
+    public VerifyOtpResponse execute(VerifyOtpCommand command, boolean allowUsed) {
         // Load user
         User user = userRepository.findByEmail(new Email(command.email()))
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS));
 
-        // Find active OTP
-        OtpToken token = otpTokenRepository
-                .findLatestActiveByUserIdAndPurpose(user.getId(), command.purpose())
-                .orElseThrow(() -> new BusinessException(ErrorCode.OTP_INVALID));
+        // Find OTP (Active or recently used if allowed)
+        Optional<OtpToken> tokenOpt = allowUsed 
+                ? otpTokenRepository.findLatestByUserIdAndPurpose(user.getId(), command.purpose())
+                : otpTokenRepository.findLatestActiveByUserIdAndPurpose(user.getId(), command.purpose());
 
-        // Validate: expiry + usage + attempt count. Throws on failure.
-        token.validateForVerification(maxAttempts);
+        OtpToken token = tokenOpt.orElseThrow(() -> new BusinessException(ErrorCode.OTP_INVALID));
+
+        // Validate: expiry + usage + attempt count.
+        if (token.isExpired()) throw new BusinessException(ErrorCode.OTP_EXPIRED);
+        
+        if (token.isUsed() && !allowUsed) {
+            throw new BusinessException(ErrorCode.OTP_ALREADY_USED);
+        }
+        
+        // If it was used but more than 5 mins ago, reject it for safety
+        if (token.isUsed() && token.getUsedAt().isBefore(Instant.now().minusSeconds(300))) {
+            throw new BusinessException(ErrorCode.OTP_ALREADY_USED, "Session expired, please verify again");
+        }
+
+        if (!token.isUsed()) {
+            token.setAttemptCount(token.getAttemptCount() + 1);
+            if (token.getAttemptCount() > maxAttempts) {
+                throw new BusinessException(ErrorCode.OTP_MAX_ATTEMPTS_EXCEEDED);
+            }
+        }
 
         // Verify code: HMAC-SHA256 hash comparison
         if (!otpHasher.verify(command.code(), token.getCodeHash())) {
-            // token.validateForVerification() already incremented attemptCount above;
-            // just persist the update (single save — no double-increment).
             otpTokenRepository.save(token);
             throw new BusinessException(ErrorCode.OTP_INVALID);
         }
 
-        token.markAsUsed();
-        otpTokenRepository.save(token);
+        if (!token.isUsed()) {
+            token.markAsUsed();
+            otpTokenRepository.save(token);
+            processUserUpdates(user, command.purpose());
+        }
 
-        processUserUpdates(user, command.purpose());
-
-        // Delegate to purpose-specific handler. Returns tokens for LOGIN and EMAIL_VERIFICATION.
+        // Delegate to purpose-specific handler
         return handlers.stream()
                 .filter(h -> h.supports(command.purpose()))
                 .findFirst()

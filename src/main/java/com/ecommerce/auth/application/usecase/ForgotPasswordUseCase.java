@@ -20,7 +20,7 @@ public class ForgotPasswordUseCase {
     public void execute(ForgotPasswordCommand command) {
         Email emailVo = new Email(command.email());
 
-        // Load user — if user exists, send OTP for password reset.
+        // Load user Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â if user exists, send OTP for password reset.
         // If not, do nothing to prevent email enumeration.
         userRepository.findByEmail(emailVo).ifPresent(user -> {
             sendOtpUseCase.execute(new SendOtpCommand(

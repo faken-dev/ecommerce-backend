@@ -29,8 +29,8 @@ import java.util.UUID;
  * Spam protection model:
  * - OTP lifespan: always fixed at 5 minutes. Never changes.
  * - Cooldown: mandatory wait before requesting a new OTP.
- *   Attempt 1-2 → 0 min cooldown. Attempt 3+ → (attempts - 2) × 5 min wait.
- *   Example: attempt 3 → 5 min wait, attempt 4 → 10 min wait.
+ *   Attempt 1-2 Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ 0 min cooldown. Attempt 3+ Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ (attempts - 2) Ă„â€Ă¢â‚¬â€ 5 min wait.
+ *   Example: attempt 3 Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ 5 min wait, attempt 4 Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ 10 min wait.
  * - Daily limit: blocks account if daily send count exceeds maxAttempts.
  * - Penalty: extended wait time when spam pattern is detected (rapid repeated requests).
  */
@@ -90,7 +90,7 @@ public class SendOtpUseCase {
                     "Please wait " + formatWaitTime(cooldownRemaining) + " before requesting a new OTP.");
         }
 
-        // Penalty check: detected spam pattern → extend wait
+        // Penalty check: detected spam pattern Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ extend wait
         long penaltyTtl = spamProtection.getPenaltyTtl(userId, command.purpose());
         if (penaltyTtl > 0) {
             int warnCount = spamProtection.getPenaltyWarnCount(userId, command.purpose());
@@ -109,7 +109,7 @@ public class SendOtpUseCase {
         Optional<OtpToken> activeToken = otpTokenRepository
                 .findLatestActiveByUserIdAndPurpose(userId, command.purpose());
         if (activeToken.isPresent()) {
-            // User spamming the button while OTP is still active → enforce cooldown
+            // User spamming the button while OTP is still active Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ enforce cooldown
             spamProtection.setCooldownWindow(userId, command.purpose(), cooldownSeconds);
             throw new BusinessException(
                     ErrorCode.OTP_STILL_ACTIVE,
@@ -146,12 +146,12 @@ public class SendOtpUseCase {
                     "No " + command.channel() + " destination found for user.");
         }
 
-        // Publish event (no raw OTP — handler reads from Redis)
+        // Publish event
         eventPublisher.publish(new OtpRequestedEvent(
-                userId, destination, command.channel(), command.purpose(), Instant.now()));
+                userId, destination, rawOtp, command.channel(), command.purpose(), Instant.now()));
     }
 
-    // cooldownMinutes = max(0, sendCount - 2) × 5
+    // cooldownMinutes = max(0, sendCount - 2) Ă„â€Ă¢â‚¬â€ 5
     private long calculateCooldown(int sendCount) {
         return Math.max(0, sendCount - 2) * COOLDOWN_MINUTES * 60L;
     }
