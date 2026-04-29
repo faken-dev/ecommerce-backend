@@ -4,24 +4,29 @@ import com.ecommerce.shared.domain.AuditableEntity;
 import com.ecommerce.shared.exception.BusinessException;
 import com.ecommerce.shared.exception.ErrorCode;
 import com.github.f4b6a3.uuid.UuidCreator;
-
 import lombok.Getter;
-import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 import java.time.Instant;
 import java.util.UUID;
 
 @Getter
+@Setter
+@NoArgsConstructor
+@SuperBuilder
 public class OtpToken extends AuditableEntity {
 
     public enum Channel { EMAIL, SMS, WHATSAPP }
     public enum Purpose { EMAIL_VERIFICATION, PHONE_VERIFICATION, PASSWORD_RESET, LOGIN }
 
-    private final UUID userId;
+    private UUID userId;
     /** HMAC-SHA256 hash of the raw OTP. 64 hex characters. */
-    private final String codeHash;
-    private final Channel channel;
-    private final Purpose purpose;
-    private final Instant expiresAt;
+    private String codeHash;
+    private Channel channel;
+    private Purpose purpose;
+    private Instant expiresAt;
     private Instant usedAt;
     /** Incremented on each failed verification attempt. */
     private int attemptCount;
@@ -29,31 +34,18 @@ public class OtpToken extends AuditableEntity {
     /** Creates a new OTP token. */
     public static OtpToken create(UUID userId, String codeHash, Channel channel,
                                   Purpose purpose, int expiryMinutes) {
+        Instant now = Instant.now();
         return OtpToken.builder()
                 .id(UuidCreator.getTimeOrderedEpoch())
                 .userId(userId)
                 .codeHash(codeHash)
                 .channel(channel)
                 .purpose(purpose)
-                .expiresAt(Instant.now().plusSeconds(expiryMinutes * 60L))
+                .expiresAt(now.plusSeconds(expiryMinutes * 60L))
                 .attemptCount(0)
-                .createdAt(Instant.now())
-                .updatedAt(Instant.now())
+                .createdAt(now)
+                .updatedAt(now)
                 .build();
-    }
-
-    @Builder
-    public OtpToken(UUID id, UUID userId, String codeHash, Channel channel,
-                    Purpose purpose, Instant expiresAt, Instant usedAt, int attemptCount,
-                    Instant createdAt, Instant updatedAt, UUID createdBy, UUID updatedBy) {
-        super(id, createdAt, updatedAt, createdBy, updatedBy);
-        this.userId = userId;
-        this.codeHash = codeHash;
-        this.channel = channel;
-        this.purpose = purpose;
-        this.expiresAt = expiresAt;
-        this.usedAt = usedAt;
-        this.attemptCount = attemptCount;
     }
 
     // ── Domain Rules ──────────────────────────────────────────────────────────

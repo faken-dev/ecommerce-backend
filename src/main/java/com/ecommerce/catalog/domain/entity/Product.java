@@ -8,11 +8,14 @@ import com.ecommerce.shared.domain.AuditableEntity;
 import com.ecommerce.shared.exception.BusinessException;
 import com.ecommerce.shared.exception.ErrorCode;
 import com.github.f4b6a3.uuid.UuidCreator;
-import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +24,9 @@ import java.util.UUID;
  * Sellers create/manage products; buyers browse/search.
  */
 @Getter
+@Setter
+@NoArgsConstructor
+@SuperBuilder
 public class Product extends AuditableEntity {
 
     public enum Status { DRAFT, ACTIVE, ARCHIVED, DELETED }
@@ -38,7 +44,8 @@ public class Product extends AuditableEntity {
     private String sku;
     private String barcode;
     private UUID categoryId;
-    private List<String> tags;
+    @SuperBuilder.Default
+    private List<String> tags = new ArrayList<>();
     private Status status;
     private boolean isFeatured;
     private Visibility visibility;
@@ -48,14 +55,21 @@ public class Product extends AuditableEntity {
     private int reviewCount;
     private BigDecimal weightKg;
     private String weightUnit;
+    private String threeDModelUrl; // For AR/3D visualization
     private Instant deletedAt;
+
+    @SuperBuilder.Default
+    private List<ProductImage> images = new ArrayList<>();
+    @SuperBuilder.Default
+    private List<ProductVariant> variants = new ArrayList<>();
 
     // ── Factory ────────────────────────────────────────────────────────────────
 
-    public static ProductBuilder create(UUID sellerId, String name, String slug,
-                                        String description, BigDecimal price) {
+    public static Product create(UUID sellerId, String name, String slug,
+                                 String description, BigDecimal price) {
         validateSlug(slug);
         validatePrice(price);
+        Instant now = Instant.now();
         return Product.builder()
                 .id(UuidCreator.getTimeOrderedEpoch())
                 .sellerId(sellerId)
@@ -69,13 +83,17 @@ public class Product extends AuditableEntity {
                 .isFeatured(false)
                 .visibility(Visibility.SHOP)
                 .reviewCount(0)
-                .weightUnit("KG");
+                .weightUnit("KG")
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
     }
 
-    public static ProductBuilder createAsDraft(UUID sellerId, String name, String slug,
-                                               BigDecimal price) {
+    public static Product createAsDraft(UUID sellerId, String name, String slug,
+                                                BigDecimal price) {
         validateSlug(slug);
         validatePrice(price);
+        Instant now = Instant.now();
         return Product.builder()
                 .id(UuidCreator.getTimeOrderedEpoch())
                 .sellerId(sellerId)
@@ -88,7 +106,10 @@ public class Product extends AuditableEntity {
                 .isFeatured(false)
                 .visibility(Visibility.SHOP)
                 .reviewCount(0)
-                .weightUnit("KG");
+                .weightUnit("KG")
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
     }
 
     // ── Validation ────────────────────────────────────────────────────────────
@@ -119,7 +140,7 @@ public class Product extends AuditableEntity {
 
     public void update(String name, String description, BigDecimal price,
                        BigDecimal compareAtPrice, UUID categoryId, List<String> tags,
-                       String metaTitle, String metaDescription) {
+                       String metaTitle, String metaDescription, String threeDModelUrl) {
         if (name != null) this.name = name.trim();
         if (description != null) this.description = description.trim();
         if (price != null) {
@@ -131,7 +152,8 @@ public class Product extends AuditableEntity {
         this.tags = tags;
         this.metaTitle = metaTitle;
         this.metaDescription = metaDescription;
-        this.setUpdateAt(Instant.now());
+        this.threeDModelUrl = threeDModelUrl;
+        this.setUpdatedAt(Instant.now());
     }
 
     public void updatePricing(BigDecimal price, BigDecimal compareAtPrice) {
@@ -140,19 +162,19 @@ public class Product extends AuditableEntity {
             this.price = price;
         }
         this.compareAtPrice = compareAtPrice;
-        this.setUpdateAt(Instant.now());
+        this.setUpdatedAt(Instant.now());
     }
 
     public void adjustStock(int adjustment) {
         this.stockQuantity = Math.max(0, this.stockQuantity + adjustment);
-        this.setUpdateAt(Instant.now());
+        this.setUpdatedAt(Instant.now());
     }
 
     public void setStockQuantity(int quantity) {
         if (quantity < 0) throw new BusinessException(ErrorCode.VALIDATION_FAILED,
                 "Stock cannot be negative");
         this.stockQuantity = quantity;
-        this.setUpdateAt(Instant.now());
+        this.setUpdatedAt(Instant.now());
     }
 
     public void activate() {
@@ -161,24 +183,24 @@ public class Product extends AuditableEntity {
                     "Cannot activate a deleted product");
         }
         this.status = Status.ACTIVE;
-        this.setUpdateAt(Instant.now());
+        this.setUpdatedAt(Instant.now());
     }
 
     public void archive() {
         this.status = Status.ARCHIVED;
-        this.setUpdateAt(Instant.now());
+        this.setUpdatedAt(Instant.now());
     }
 
     public void softDelete() {
         this.status = Status.DELETED;
         this.deletedAt = Instant.now();
-        this.setUpdateAt(Instant.now());
+        this.setUpdatedAt(Instant.now());
     }
 
     public void restore() {
         this.status = Status.DRAFT;
         this.deletedAt = null;
-        this.setUpdateAt(Instant.now());
+        this.setUpdatedAt(Instant.now());
     }
 
     public boolean isAvailable() {
@@ -209,42 +231,5 @@ public class Product extends AuditableEntity {
 
     public ProductDeletedEvent toDeletedEvent() {
         return new ProductDeletedEvent(getId(), Instant.now());
-    }
-
-    // ── Builder ───────────────────────────────────────────────────────────────
-
-    @Builder
-    public Product(UUID id, UUID sellerId, String name, String slug, String description,
-                   BigDecimal price, BigDecimal compareAtPrice, BigDecimal costPerItem,
-                   int stockQuantity, int lowStockThreshold, String sku, String barcode,
-                   UUID categoryId, List<String> tags, Status status, boolean isFeatured,
-                   Visibility visibility, String metaTitle, String metaDescription,
-                   BigDecimal averageRating, int reviewCount, BigDecimal weightKg,
-                   String weightUnit, Instant deletedAt,
-                   Instant createdAt, Instant updatedAt, UUID createdBy, UUID updatedBy) {
-        super(id, createdAt, updatedAt, createdBy, updatedBy);
-        this.sellerId = sellerId;
-        this.name = name;
-        this.slug = slug;
-        this.description = description;
-        this.price = price;
-        this.compareAtPrice = compareAtPrice;
-        this.costPerItem = costPerItem;
-        this.stockQuantity = stockQuantity;
-        this.lowStockThreshold = lowStockThreshold;
-        this.sku = sku;
-        this.barcode = barcode;
-        this.categoryId = categoryId;
-        this.tags = tags;
-        this.status = status;
-        this.isFeatured = isFeatured;
-        this.visibility = visibility;
-        this.metaTitle = metaTitle;
-        this.metaDescription = metaDescription;
-        this.averageRating = averageRating;
-        this.reviewCount = reviewCount;
-        this.weightKg = weightKg;
-        this.weightUnit = weightUnit != null ? weightUnit : "KG";
-        this.deletedAt = deletedAt;
     }
 }
