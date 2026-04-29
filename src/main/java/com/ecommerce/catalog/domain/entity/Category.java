@@ -10,16 +10,16 @@ import com.ecommerce.shared.domain.AuditableEntity;
 import com.ecommerce.shared.exception.BusinessException;
 import com.ecommerce.shared.exception.ErrorCode;
 import com.github.f4b6a3.uuid.UuidCreator;
-import lombok.Builder;
-import lombok.Getter;
 
-/**
- * Category — hierarchical product classification.
- *
- * Categories form a tree via self-referencing parent_id.
- * Supports: name, slug, description, icon, sort order, active flag.
- */
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 @Getter
+@Setter
+@NoArgsConstructor
+@SuperBuilder
 public class Category extends AuditableEntity {
 
     private static final int SLUG_MAX_LENGTH = 100;
@@ -32,10 +32,7 @@ public class Category extends AuditableEntity {
     private int sortOrder;
     private boolean active;
 
-    // ── Factory ────────────────────────────────────────────────────────────────
-
-    /** Creates a root category (no parent). */
-    public static CategoryBuilder createRoot(String slug, String name, String description) {
+    public static Category createRoot(String slug, String name, String description) {
         validateSlug(slug);
         return Category.builder()
                 .id(UuidCreator.getTimeOrderedEpoch())
@@ -43,11 +40,11 @@ public class Category extends AuditableEntity {
                 .name(name.trim())
                 .description(description != null ? description.trim() : null)
                 .sortOrder(0)
-                .active(true);
+                .active(true)
+                .build();
     }
 
-    /** Creates a sub-category under a parent. */
-    public static CategoryBuilder createChild(String slug, String name, String description, UUID parentId) {
+    public static Category createChild(String slug, String name, String description, UUID parentId) {
         validateSlug(slug);
         return Category.builder()
                 .id(UuidCreator.getTimeOrderedEpoch())
@@ -56,10 +53,9 @@ public class Category extends AuditableEntity {
                 .description(description != null ? description.trim() : null)
                 .parentId(parentId)
                 .sortOrder(0)
-                .active(true);
+                .active(true)
+                .build();
     }
-
-    // ── Domain Rules ──────────────────────────────────────────────────────────
 
     private static void validateSlug(String slug) {
         if (slug == null || slug.isBlank()) {
@@ -84,26 +80,24 @@ public class Category extends AuditableEntity {
         this.description = description != null ? description.trim() : null;
         this.iconUrl = iconUrl != null ? iconUrl.trim() : null;
         this.sortOrder = sortOrder;
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
 
     public void activate() {
         this.active = true;
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
 
     public void deactivate() {
         this.active = false;
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
 
     public void updateSlug(String slug) {
         validateSlug(slug);
         this.slug = slug.toLowerCase().trim();
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
-
-    // ── Event Factory ─────────────────────────────────────────────────────────
 
     public CategoryCreatedEvent toCreatedEvent() {
         return new CategoryCreatedEvent(this.getId(), Instant.now());
@@ -116,24 +110,4 @@ public class Category extends AuditableEntity {
     public CategoryDeletedEvent toDeletedEvent() {
         return new CategoryDeletedEvent(this.getId(), Instant.now());
     }
-
-    // ── Builder Support ───────────────────────────────────────────────────────
-
-    @Builder
-    public Category(UUID id, UUID parentId, String slug, String name, String description,
-                     String iconUrl, int sortOrder, boolean active,
-                     Instant createdAt, Instant updatedAt, UUID createdBy, UUID updatedBy) {
-        super(id, createdAt, updatedAt, createdBy, updatedBy);
-        this.parentId = parentId;
-        this.slug = slug;
-        this.name = name;
-        this.description = description;
-        this.iconUrl = iconUrl;
-        this.sortOrder = sortOrder;
-        this.active = active;
-    }
-
-    // ── Package-private setters (for mapper) ─────────────────────────────────
-
-    void setParentId(UUID parentId) { this.parentId = parentId; }
 }

@@ -2,14 +2,18 @@ package com.ecommerce.catalog.domain.entity;
 
 import com.ecommerce.shared.domain.AuditableEntity;
 import com.github.f4b6a3.uuid.UuidCreator;
-import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.UUID;
 
 @Getter
+@Setter
+@NoArgsConstructor
+@SuperBuilder
 public class ProductVariant extends AuditableEntity {
 
     private UUID productId;
@@ -26,7 +30,7 @@ public class ProductVariant extends AuditableEntity {
     private String imageUrl;
     private boolean active;
 
-    public static ProductVariantBuilder create(UUID productId, String title,
+    public static ProductVariant create(UUID productId, String title,
             String optionName, String optionValue) {
         return ProductVariant.builder()
                 .id(UuidCreator.getTimeOrderedEpoch())
@@ -35,7 +39,8 @@ public class ProductVariant extends AuditableEntity {
                 .optionName(optionName)
                 .optionValue(optionValue)
                 .stockQuantity(0)
-                .active(true);
+                .active(true)
+                .build();
     }
 
     public void updatePricing(BigDecimal price, BigDecimal compareAtPrice) {
@@ -44,43 +49,21 @@ public class ProductVariant extends AuditableEntity {
         }
         this.price = price;
         this.compareAtPrice = compareAtPrice;
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
 
     public void adjustStock(int quantity) {
         this.stockQuantity = Math.max(0, this.stockQuantity + quantity);
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
 
     public void activate() {
         this.active = true;
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
 
     public void deactivate() {
         this.active = false;
-        this.setUpdateAt(Instant.now());
-    }
-
-    @Builder
-    public ProductVariant(UUID id, UUID productId, String sku, String barcode,
-            String title, BigDecimal price, BigDecimal compareAtPrice,
-            int stockQuantity, String optionName, String optionValue,
-            String option2Name, String option2Value, String imageUrl, boolean active,
-            Instant createdAt, Instant updatedAt, UUID createdBy, UUID updatedBy) {
-        super(id, createdAt, updatedAt, createdBy, updatedBy);
-        this.productId = productId;
-        this.sku = sku;
-        this.barcode = barcode;
-        this.title = title;
-        this.price = price;
-        this.compareAtPrice = compareAtPrice;
-        this.stockQuantity = stockQuantity;
-        this.optionName = optionName;
-        this.optionValue = optionValue;
-        this.option2Name = option2Name;
-        this.option2Value = option2Value;
-        this.imageUrl = imageUrl;
-        this.active = active;
+        this.touchUpdate();
     }
 }
