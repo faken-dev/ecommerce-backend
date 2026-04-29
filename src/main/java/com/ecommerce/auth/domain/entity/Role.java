@@ -3,24 +3,25 @@ package com.ecommerce.auth.domain.entity;
 import com.ecommerce.shared.domain.AuditableEntity;
 import com.github.f4b6a3.uuid.UuidCreator;
 
-import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 @Getter
+@Setter
+@NoArgsConstructor
+@SuperBuilder
 public class Role extends AuditableEntity {
-    private final String name;
-    private final String description;
-    private final Set<Permission> permissions;
-
-    /** Soft-delete timestamp. Null = active record. */
+    private String name;
+    private String description;
+    private Set<Permission> permissions;
     private Instant deletedAt;
 
-    /** Create a new role. */
     public static Role create(String name, String description) {
         return Role.builder()
                 .id(UuidCreator.getTimeOrderedEpoch())
@@ -31,29 +32,19 @@ public class Role extends AuditableEntity {
                 .build();
     }
 
-    @Builder
-    public Role(UUID id, String name, String description, Set<Permission> permissions,
-                Instant createdAt, Instant updatedAt,
-                UUID createdBy, UUID updatedBy,
-                Instant deletedAt) {
-        super(id, createdAt, updatedAt, createdBy, updatedBy);
-        this.name = name;
-        this.description = description;
-        this.permissions = permissions != null ? permissions : new HashSet<>();
-        this.deletedAt = deletedAt;
-    }
-
-    // ── Domain Rules ──────────────────────────────────────────────────────────
     public void addPermission(Permission permission) {
+        if (this.permissions == null) this.permissions = new HashSet<>();
         this.permissions.add(permission);
     }
 
     public void removePermission(Permission permission) {
-        this.permissions.remove(permission);
+        if (this.permissions != null) {
+            this.permissions.remove(permission);
+        }
     }
 
     public boolean hasPermission(String permissionName) {
-        return permissions.stream().anyMatch(p -> p.getName().equals(permissionName));
+        return permissions != null && permissions.stream().anyMatch(p -> p.getName().equals(permissionName));
     }
 
     public boolean isDeleted() {
