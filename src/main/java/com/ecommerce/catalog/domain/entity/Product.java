@@ -8,19 +8,24 @@ import com.ecommerce.shared.domain.AuditableEntity;
 import com.ecommerce.shared.exception.BusinessException;
 import com.ecommerce.shared.exception.ErrorCode;
 import com.github.f4b6a3.uuid.UuidCreator;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Product — catalog aggregate root.
- * Sellers create/manage products; buyers browse/search.
- */
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 @Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 public class Product extends AuditableEntity {
 
     public enum Status { DRAFT, ACTIVE, ARCHIVED, DELETED }
@@ -33,8 +38,6 @@ public class Product extends AuditableEntity {
     private BigDecimal price;
     private BigDecimal compareAtPrice;
     private BigDecimal costPerItem;
-    private int stockQuantity;
-    private int lowStockThreshold;
     private String sku;
     private String barcode;
     private UUID categoryId;
@@ -48,12 +51,23 @@ public class Product extends AuditableEntity {
     private int reviewCount;
     private BigDecimal weightKg;
     private String weightUnit;
+    private String threeDModelUrl;
     private Instant deletedAt;
 
-    // ── Factory ────────────────────────────────────────────────────────────────
+    @Builder.Default
+    private List<ProductImage> images = new ArrayList<>();
 
-    public static ProductBuilder create(UUID sellerId, String name, String slug,
-                                        String description, BigDecimal price) {
+    public String getPrimaryImageUrl() {
+        if (images == null || images.isEmpty()) return null;
+        return images.stream()
+                .filter(ProductImage::isPrimary)
+                .findFirst()
+                .map(ProductImage::getUrl)
+                .orElse(images.get(0).getUrl());
+    }
+
+    public static Product create(UUID sellerId, String name, String slug,
+                                          String description, BigDecimal price) {
         validateSlug(slug);
         validatePrice(price);
         return Product.builder()
@@ -63,16 +77,17 @@ public class Product extends AuditableEntity {
                 .slug(slug.toLowerCase().trim())
                 .description(description != null ? description.trim() : null)
                 .price(price)
-                .stockQuantity(0)
-                .lowStockThreshold(10)
                 .status(Status.ACTIVE)
                 .isFeatured(false)
                 .visibility(Visibility.SHOP)
                 .reviewCount(0)
-                .weightUnit("KG");
+                .weightUnit("KG")
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
     }
 
-    public static ProductBuilder createAsDraft(UUID sellerId, String name, String slug,
+    public static Product createAsDraft(UUID sellerId, String name, String slug,
                                                BigDecimal price) {
         validateSlug(slug);
         validatePrice(price);
@@ -82,16 +97,15 @@ public class Product extends AuditableEntity {
                 .name(name.trim())
                 .slug(slug.toLowerCase().trim())
                 .price(price)
-                .stockQuantity(0)
-                .lowStockThreshold(10)
                 .status(Status.DRAFT)
                 .isFeatured(false)
                 .visibility(Visibility.SHOP)
                 .reviewCount(0)
-                .weightUnit("KG");
+                .weightUnit("KG")
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
     }
-
-    // ── Validation ────────────────────────────────────────────────────────────
 
     private static void validateSlug(String slug) {
         if (slug == null || slug.isBlank()) {
@@ -115,12 +129,14 @@ public class Product extends AuditableEntity {
         }
     }
 
-    // ── Domain Methods ───────────────────────────────────────────────────────
-
-    public void update(String name, String description, BigDecimal price,
+    public void update(String name, String slug, String description, BigDecimal price,
                        BigDecimal compareAtPrice, UUID categoryId, List<String> tags,
-                       String metaTitle, String metaDescription) {
+                       String metaTitle, String metaDescription, String threeDModelUrl) {
         if (name != null) this.name = name.trim();
+        if (slug != null) {
+            validateSlug(slug);
+            this.slug = slug.toLowerCase().trim();
+        }
         if (description != null) this.description = description.trim();
         if (price != null) {
             validatePrice(price);
@@ -131,7 +147,18 @@ public class Product extends AuditableEntity {
         this.tags = tags;
         this.metaTitle = metaTitle;
         this.metaDescription = metaDescription;
-        this.setUpdateAt(Instant.now());
+        this.threeDModelUrl = threeDModelUrl;
+        this.touchUpdate();
+    }
+
+    public void setImages(List<ProductImage> images) {
+        if (images == null) {
+            this.images = new ArrayList<>();
+        } else {
+            this.images = images;
+            this.images.forEach(img -> img.setProductId(this.getId()));
+        }
+        this.touchUpdate();
     }
 
     public void updatePricing(BigDecimal price, BigDecimal compareAtPrice) {
@@ -140,19 +167,7 @@ public class Product extends AuditableEntity {
             this.price = price;
         }
         this.compareAtPrice = compareAtPrice;
-        this.setUpdateAt(Instant.now());
-    }
-
-    public void adjustStock(int adjustment) {
-        this.stockQuantity = Math.max(0, this.stockQuantity + adjustment);
-        this.setUpdateAt(Instant.now());
-    }
-
-    public void setStockQuantity(int quantity) {
-        if (quantity < 0) throw new BusinessException(ErrorCode.VALIDATION_FAILED,
-                "Stock cannot be negative");
-        this.stockQuantity = quantity;
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
 
     public void activate() {
@@ -161,39 +176,33 @@ public class Product extends AuditableEntity {
                     "Cannot activate a deleted product");
         }
         this.status = Status.ACTIVE;
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
 
     public void archive() {
         this.status = Status.ARCHIVED;
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
 
     public void softDelete() {
         this.status = Status.DELETED;
         this.deletedAt = Instant.now();
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
 
     public void restore() {
         this.status = Status.DRAFT;
         this.deletedAt = null;
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
 
     public boolean isAvailable() {
         return status == Status.ACTIVE && deletedAt == null;
     }
 
-    public boolean isLowOnStock() {
-        return stockQuantity <= lowStockThreshold;
-    }
-
     public boolean isDeleted() {
         return status == Status.DELETED;
     }
-
-    // ── Events ───────────────────────────────────────────────────────────────
 
     public ProductCreatedEvent toCreatedEvent() {
         return new ProductCreatedEvent(getId(), sellerId, name, price, Instant.now());
@@ -209,42 +218,5 @@ public class Product extends AuditableEntity {
 
     public ProductDeletedEvent toDeletedEvent() {
         return new ProductDeletedEvent(getId(), Instant.now());
-    }
-
-    // ── Builder ───────────────────────────────────────────────────────────────
-
-    @Builder
-    public Product(UUID id, UUID sellerId, String name, String slug, String description,
-                   BigDecimal price, BigDecimal compareAtPrice, BigDecimal costPerItem,
-                   int stockQuantity, int lowStockThreshold, String sku, String barcode,
-                   UUID categoryId, List<String> tags, Status status, boolean isFeatured,
-                   Visibility visibility, String metaTitle, String metaDescription,
-                   BigDecimal averageRating, int reviewCount, BigDecimal weightKg,
-                   String weightUnit, Instant deletedAt,
-                   Instant createdAt, Instant updatedAt, UUID createdBy, UUID updatedBy) {
-        super(id, createdAt, updatedAt, createdBy, updatedBy);
-        this.sellerId = sellerId;
-        this.name = name;
-        this.slug = slug;
-        this.description = description;
-        this.price = price;
-        this.compareAtPrice = compareAtPrice;
-        this.costPerItem = costPerItem;
-        this.stockQuantity = stockQuantity;
-        this.lowStockThreshold = lowStockThreshold;
-        this.sku = sku;
-        this.barcode = barcode;
-        this.categoryId = categoryId;
-        this.tags = tags;
-        this.status = status;
-        this.isFeatured = isFeatured;
-        this.visibility = visibility;
-        this.metaTitle = metaTitle;
-        this.metaDescription = metaDescription;
-        this.averageRating = averageRating;
-        this.reviewCount = reviewCount;
-        this.weightKg = weightKg;
-        this.weightUnit = weightUnit != null ? weightUnit : "KG";
-        this.deletedAt = deletedAt;
     }
 }

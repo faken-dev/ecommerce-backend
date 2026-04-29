@@ -6,27 +6,30 @@ import com.ecommerce.shared.exception.ErrorCode;
 import com.github.f4b6a3.uuid.UuidCreator;
 
 import lombok.Getter;
-import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
 import java.time.Instant;
 import java.util.UUID;
 
 @Getter
+@Setter
+@NoArgsConstructor
+@SuperBuilder
 public class OtpToken extends AuditableEntity {
 
     public enum Channel { EMAIL, SMS, WHATSAPP }
     public enum Purpose { EMAIL_VERIFICATION, PHONE_VERIFICATION, PASSWORD_RESET, LOGIN }
 
-    private final UUID userId;
-    /** HMAC-SHA256 hash of the raw OTP. 64 hex characters. */
-    private final String codeHash;
-    private final Channel channel;
-    private final Purpose purpose;
-    private final Instant expiresAt;
+    private UUID userId;
+    private String codeHash;
+    private Channel channel;
+    private Purpose purpose;
+    private Instant expiresAt;
     private Instant usedAt;
-    /** Incremented on each failed verification attempt. */
     private int attemptCount;
 
-    /** Creates a new OTP token. */
     public static OtpToken create(UUID userId, String codeHash, Channel channel,
                                   Purpose purpose, int expiryMinutes) {
         return OtpToken.builder()
@@ -42,26 +45,9 @@ public class OtpToken extends AuditableEntity {
                 .build();
     }
 
-    @Builder
-    public OtpToken(UUID id, UUID userId, String codeHash, Channel channel,
-                    Purpose purpose, Instant expiresAt, Instant usedAt, int attemptCount,
-                    Instant createdAt, Instant updatedAt, UUID createdBy, UUID updatedBy) {
-        super(id, createdAt, updatedAt, createdBy, updatedBy);
-        this.userId = userId;
-        this.codeHash = codeHash;
-        this.channel = channel;
-        this.purpose = purpose;
-        this.expiresAt = expiresAt;
-        this.usedAt = usedAt;
-        this.attemptCount = attemptCount;
-    }
-
-    // ── Domain Rules ──────────────────────────────────────────────────────────
-
     public boolean isExpired() { return Instant.now().isAfter(expiresAt); }
     public boolean isUsed()   { return usedAt != null; }
 
-    /** Throws BusinessException if expired, already used, or max attempts exceeded. */
     public void validateForVerification(int maxAttempts) {
         if (isExpired()) throw new BusinessException(ErrorCode.OTP_EXPIRED);
         if (isUsed())    throw new BusinessException(ErrorCode.OTP_ALREADY_USED);
