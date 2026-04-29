@@ -33,9 +33,18 @@ public class AuthController {
     private final VerifyOtpUseCase verifyOtpUseCase;
     private final ForgotPasswordUseCase forgotPasswordUseCase;
     private final ResetPasswordUseCase resetPasswordUseCase;
+    private final GetUserInfoUseCase getUserInfoUseCase;
     private final TokenService tokenService;
 
-    // ── Auth Endpoints ─────────────────────────────────────────────────
+    // Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬ Auth Endpoints Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬
+
+    @GetMapping("/me")
+    @Operation(summary = "Get current authenticated user info",
+               security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(
+            @AuthenticationPrincipal UUID userId) {
+        return ResponseEntity.ok(ApiResponse.ok(getUserInfoUseCase.execute(userId)));
+    }
 
     @PostMapping("/register")
     @Operation(summary = "Register a new account")
@@ -121,8 +130,8 @@ public class AuthController {
 
     @PostMapping("/otp/send")
     @Operation(summary = "Send OTP via Email / SMS / WhatsApp")
-    //  SecurityConfig đã declare endpoint này là PUBLIC
-    // → annotation này chỉ để Swagger hiển thị, không enforce auth
+    //  SecurityConfig Ä‚â€Ă¢â‚¬ËœĂ„â€Ă‚Â£ declare endpoint nĂ„â€Ă‚Â y lĂ„â€Ă‚Â  PUBLIC
+    // Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ annotation nĂ„â€Ă‚Â y chÄ‚Â¡Ă‚Â»Ă¢â‚¬Â° Ä‚â€Ă¢â‚¬ËœÄ‚Â¡Ă‚Â»Ă†â€™ Swagger hiÄ‚Â¡Ă‚Â»Ă†â€™n thÄ‚Â¡Ă‚Â»Ă¢â‚¬Â¹, khĂ„â€Ă‚Â´ng enforce auth
     public ResponseEntity<ApiResponse<Void>> sendOtp(
             @Valid @RequestBody SendOtpRequest request) {
 
@@ -139,7 +148,7 @@ public class AuthController {
 
     @PostMapping("/otp/verify")
     @Operation(summary = "Verify OTP")
-    // SecurityConfig đã declare endpoint này là PUBLIC
+    // SecurityConfig Ä‚â€Ă¢â‚¬ËœĂ„â€Ă‚Â£ declare endpoint nĂ„â€Ă‚Â y lĂ„â€Ă‚Â  PUBLIC
     public ResponseEntity<ApiResponse<VerifyOtpResponse>> verifyOtpAuthenticated(
             @Valid @RequestBody VerifyOtpRequest request) {
 
@@ -156,7 +165,7 @@ public class AuthController {
 
         forgotPasswordUseCase.execute(new ForgotPasswordCommand(request.email()));
 
-        // Luôn trả 200 dù email có tồn tại hay không — tránh account enumeration
+        // LuĂ„â€Ă‚Â´n trÄ‚Â¡Ă‚ÂºĂ‚Â£ 200 dĂ„â€Ă‚Â¹ email cĂ„â€Ă‚Â³ tÄ‚Â¡Ă‚Â»Ă¢â‚¬Å“n tÄ‚Â¡Ă‚ÂºĂ‚Â¡i hay khĂ„â€Ă‚Â´ng Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â trĂ„â€Ă‚Â¡nh account enumeration
         return ResponseEntity.ok(ApiResponse.ok(null,
                 "If the email exists, a reset code has been sent"));
     }
@@ -176,11 +185,11 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok(null, "Password reset successfully"));
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────
+    // Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬ Helpers Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬Ä‚Â¢Ă¢â‚¬ÂĂ¢â€Â¬
 
     /**
-     * Extract Bearer token từ Authorization header.
-     * @return raw token, hoặc empty string nếu không có
+     * Extract Bearer token tÄ‚Â¡Ă‚Â»Ă‚Â« Authorization header.
+     * @return raw token, hoÄ‚Â¡Ă‚ÂºĂ‚Â·c empty string nÄ‚Â¡Ă‚ÂºĂ‚Â¿u khĂ„â€Ă‚Â´ng cĂ„â€Ă‚Â³
      */
     private String extractBearerToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
@@ -188,7 +197,7 @@ public class AuthController {
     }
 
     /**
-     * Extract Bearer token từ String header value.
+     * Extract Bearer token tÄ‚Â¡Ă‚Â»Ă‚Â« String header value.
      */
     private String extractFromHeader(String header) {
         if (header != null && header.startsWith("Bearer ")) {
@@ -197,3 +206,5 @@ public class AuthController {
         return "";
     }
 }
+
+
