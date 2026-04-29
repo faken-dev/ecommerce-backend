@@ -3,6 +3,7 @@ package com.ecommerce.auth.infrastructure.persistence.impl;
 import com.ecommerce.auth.domain.entity.User;
 import com.ecommerce.auth.domain.repository.UserRepository;
 import com.ecommerce.auth.domain.valueobject.Email;
+import com.ecommerce.auth.domain.valueobject.OAuth2Provider;
 import com.ecommerce.auth.infrastructure.persistence.entity.UserJpaEntity;
 import com.ecommerce.auth.infrastructure.persistence.mapper.AuthDomainMapper;
 import com.ecommerce.auth.infrastructure.persistence.repository.UserJpaRepository;
@@ -67,6 +68,12 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByProviderAndProviderUserId(OAuth2Provider provider, String providerUserId) {
+        return jpaRepository.findByProviderAndProviderUserId(provider, providerUserId)
+                .map(mapper::toUser);
+    }
+
+    @Override
     public boolean existsByEmail(Email email) {
         return jpaRepository.existsByEmail(email.value());
     }
@@ -80,6 +87,14 @@ public class UserRepositoryImpl implements UserRepository {
     public void updateFullName(UUID userId, String fullName) {
         jpaRepository.findById(userId).ifPresent(jpa -> {
             jpa.setFullName(fullName);
+            jpaRepository.save(jpa);
+        });
+    }
+
+    @Override
+    public void updateAvatar(UUID userId, String avatarUrl) {
+        jpaRepository.findById(userId).ifPresent(jpa -> {
+            jpa.setProfilePictureUrl(avatarUrl);
             jpaRepository.save(jpa);
         });
     }

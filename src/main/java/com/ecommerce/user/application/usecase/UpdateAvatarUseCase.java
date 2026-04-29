@@ -4,9 +4,11 @@ import com.ecommerce.user.application.command.UpdateAvatarCommand;
 import com.ecommerce.user.application.dto.ProfileResponse;
 import com.ecommerce.user.domain.entity.UserProfile;
 import com.ecommerce.user.domain.repository.UserProfileRepository;
+import com.ecommerce.user.domain.event.UserAvatarUpdatedEvent;
 import com.ecommerce.shared.exception.BusinessException;
 import com.ecommerce.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ import java.util.UUID;
 public class UpdateAvatarUseCase {
 
     private final UserProfileRepository userProfileRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ProfileResponse execute(UUID userId, UpdateAvatarCommand command) {
@@ -25,6 +28,10 @@ public class UpdateAvatarUseCase {
 
         profile.updateAvatar(command.avatarUrl());
         UserProfile saved = userProfileRepository.save(profile);
+        
+        // Sync with Auth system
+        eventPublisher.publishEvent(new UserAvatarUpdatedEvent(userId, command.avatarUrl()));
+        
         return ProfileResponse.from(saved);
     }
 }

@@ -10,5 +10,7 @@ public record UserResponse(
         String phoneNumber,
         boolean emailVerified,
         boolean phoneVerified,
-        Set<String> roles
+        Set<String> roles,
+        Set<String> permissions,
+        String profilePictureUrl
 ) {}
