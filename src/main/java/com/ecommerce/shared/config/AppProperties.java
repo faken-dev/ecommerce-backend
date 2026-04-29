@@ -13,8 +13,8 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
 
-    private final Jwt jwt = new Jwt();
-    private final Otp otp = new Otp();
+    private Jwt jwt = new Jwt();
+    private Otp otp = new Otp();
 
     @Getter
     @Setter
