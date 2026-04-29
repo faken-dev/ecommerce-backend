@@ -24,7 +24,7 @@ public enum ErrorCode {
     AUTH_ACCOUNT_BLOCKED(4019,"Account is blocked. Please contact admin.", HttpStatus.FORBIDDEN),
     AUTH_ACCOUNT_LOCKED(4030,"Account temporarily locked due to failed attempts.", HttpStatus.TOO_MANY_REQUESTS),
     AUTH_CAPTCHA_REQUIRED(4031,"Captcha verification required. Please solve the challenge.", HttpStatus.BAD_REQUEST),
-    AUTH_TOKEN_REPLAY_DETECTED(4032, "Token reuse detected — possible attack. Please log in again.", HttpStatus.UNAUTHORIZED),
+    AUTH_TOKEN_REPLAY_DETECTED(4032, "Token reuse detected Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â possible attack. Please log in again.", HttpStatus.UNAUTHORIZED),
     AUTH_USER_DELETED(4020, "User account has been deleted", HttpStatus.GONE),
     AUTH_PERMISSION_ALREADY_EXISTS(4033, "Permission already exists", HttpStatus.CONFLICT),
     AUTH_ROLE_NOT_FOUND(4034, "Role not found", HttpStatus.NOT_FOUND),

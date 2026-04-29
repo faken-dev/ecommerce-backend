@@ -11,13 +11,17 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     // 1. Business Exception
     @ExceptionHandler(BusinessException.class)
@@ -66,8 +70,8 @@ public class GlobalExceptionHandler {
     }
 
     // 4. Missing / Wrong Parameter Type
-    @ExceptionHandler({org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class, 
-                       org.springframework.web.bind.MissingServletRequestParameterException.class})
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class, 
+                       MissingServletRequestParameterException.class})
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(Exception ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -84,3 +88,5 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCode.INTERNAL_SERVER_ERROR));
     }
 }
+
+
