@@ -7,6 +7,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
 
 import java.net.URI;
 
@@ -33,7 +34,7 @@ public class StorageConfig {
                         AwsBasicCredentials.create(accessKey, secretKey)
                 ))
                 .region(Region.US_EAST_1) // R2 ignores region but AWS SDK requires it
-                .serviceConfiguration(software.amazon.awssdk.services.s3.S3Configuration.builder()
+                .serviceConfiguration(S3Configuration.builder()
                         .pathStyleAccessEnabled(true)
                         .build())
                 .build();

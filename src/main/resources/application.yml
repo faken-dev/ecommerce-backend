@@ -104,7 +104,7 @@ app:
   ai:
     gemini:
       api-key: ${GEMINI_API_KEY}
-      model: ${GEMINI_MODEL:gemini-1.5-flash-latest}
+      model: ${GEMINI_MODEL}
 
 # Notification Services
 notification:

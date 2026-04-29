@@ -21,7 +21,7 @@ public class OpenApiConfig {
                         .title("Faken Ecommerce API")
                         .version("1.0.0")
                         .description("API Documentation for Ecommerce Backend System")
-                        .contact(new Contact().name("Huỳnh Công Tường").email("faken.dev@gmail.com")))
+                        .contact(new Contact().name("HuÄ‚Â¡Ă‚Â»Ă‚Â³nh CĂ„â€Ă‚Â´ng TÄ‚â€ Ă‚Â°Ä‚Â¡Ă‚Â»Ă‚Âng").email("faken.dev@gmail.com")))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName,

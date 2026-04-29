@@ -12,15 +12,15 @@ import java.util.HexFormat;
 /**
  * Hashing utility cho OTP codes.
  *
- * KHÔNG dùng BCrypt cho OTP vì:
- * 1. OTP fixed-length (6 chữ số) → BCrypt "adaptive cost" là overkill, tốn CPU
- * 2. OTP đã được generated bằng SecureRandom → không cần "password stretching"
- * 3. BCrypt hash output 60 ký tự → lãng phí storage
+ * KHĂ„â€Ă¢â‚¬ÂNG dĂ„â€Ă‚Â¹ng BCrypt cho OTP vĂ„â€Ă‚Â¬:
+ * 1. OTP fixed-length (6 chÄ‚Â¡Ă‚Â»Ă‚Â¯ sÄ‚Â¡Ă‚Â»Ă¢â‚¬Ëœ) Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ BCrypt "adaptive cost" lĂ„â€Ă‚Â  overkill, tÄ‚Â¡Ă‚Â»Ă¢â‚¬Ëœn CPU
+ * 2. OTP Ä‚â€Ă¢â‚¬ËœĂ„â€Ă‚Â£ Ä‚â€Ă¢â‚¬ËœÄ‚â€ Ă‚Â°Ä‚Â¡Ă‚Â»Ă‚Â£c generated bÄ‚Â¡Ă‚ÂºĂ‚Â±ng SecureRandom Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ khĂ„â€Ă‚Â´ng cÄ‚Â¡Ă‚ÂºĂ‚Â§n "password stretching"
+ * 3. BCrypt hash output 60 kĂ„â€Ă‚Â½ tÄ‚Â¡Ă‚Â»Ă‚Â± Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ lĂ„â€Ă‚Â£ng phĂ„â€Ă‚Â­ storage
  *
- * Dùng HMAC-SHA256 vì:
+ * DĂ„â€Ă‚Â¹ng HMAC-SHA256 vĂ„â€Ă‚Â¬:
  * - Fast, constant-size hash (32 bytes)
- * - Keyed hash → attacker cần biết secret mới forge được
- * - Constant-time comparison để tránh timing attacks
+ * - Keyed hash Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ attacker cÄ‚Â¡Ă‚ÂºĂ‚Â§n biÄ‚Â¡Ă‚ÂºĂ‚Â¿t secret mÄ‚Â¡Ă‚Â»Ă¢â‚¬Âºi forge Ä‚â€Ă¢â‚¬ËœÄ‚â€ Ă‚Â°Ä‚Â¡Ă‚Â»Ă‚Â£c
+ * - Constant-time comparison Ä‚â€Ă¢â‚¬ËœÄ‚Â¡Ă‚Â»Ă†â€™ trĂ„â€Ă‚Â¡nh timing attacks
  */
 @Component
 public class OtpHasher {
@@ -73,7 +73,7 @@ public class OtpHasher {
     }
 
     /**
-     * Constant-time string comparison — prevents timing attacks.
+     * Constant-time string comparison Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â prevents timing attacks.
      * Even if attacker can measure response time, they can't infer
      * how many characters matched.
      */

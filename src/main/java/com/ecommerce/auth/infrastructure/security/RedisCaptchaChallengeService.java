@@ -37,12 +37,12 @@ public class RedisCaptchaChallengeService implements CaptchaChallengeService {
             redisTemplate.expire(ipKey, Duration.ofMinutes(5));
         }
 
-        // If IP has made suspicious number of attempts in last 5 minutes → captcha
+        // If IP has made suspicious number of attempts in last 5 minutes Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ captcha
         if (ipCount != null && ipCount >= 10) {
             return true;
         }
 
-        // If user has failed attempts >= captchaThreshold → captcha required
+        // If user has failed attempts >= captchaThreshold Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ captcha required
         if (userId != null) {
             String userKey = CAPTCHA_REQUIRED_PREFIX + userId;
             Boolean exists = redisTemplate.hasKey(userKey);
