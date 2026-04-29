@@ -1,11 +1,7 @@
 package com.ecommerce.shared.exception;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
-@Getter
-@RequiredArgsConstructor
 public enum ErrorCode {
 
     // Generic
@@ -48,6 +44,7 @@ public enum ErrorCode {
     RATE_LIMIT_EXCEEDED(4290, "Too many requests, please try again later", HttpStatus.TOO_MANY_REQUESTS),
 
     // User
+    USER_NOT_FOUND(5003, "User not found", HttpStatus.NOT_FOUND),
     USER_PROFILE_NOT_FOUND(5001, "User profile not found", HttpStatus.NOT_FOUND),
     USER_INVALID_DATE_OF_BIRTH(5002, "Date of birth cannot be in the future", HttpStatus.BAD_REQUEST),
 
@@ -99,8 +96,25 @@ public enum ErrorCode {
     VOUCHER_CODE_ALREADY_EXISTS(9009, "A voucher with this code already exists", HttpStatus.CONFLICT),
     VOUCHER_NOT_APPLICABLE(9010, "Voucher is not applicable to this order", HttpStatus.BAD_REQUEST),
     VOUCHER_SCOPE_MISMATCH(9011, "No eligible products or categories in this order for the voucher", HttpStatus.BAD_REQUEST),
-    VOUCHER_FORBIDDEN(9012, "You do not have permission to access this voucher", HttpStatus.FORBIDDEN);
+    VOUCHER_FORBIDDEN(9012, "You do not have permission to access this voucher", HttpStatus.FORBIDDEN),
+    VOUCHER_DEPLETED(9013, "Voucher is out of stock", HttpStatus.BAD_REQUEST),
+    VOUCHER_ALREADY_COLLECTED(9014, "Voucher already collected", HttpStatus.BAD_REQUEST),
+    VOUCHER_INVALID(9015, "Voucher is invalid", HttpStatus.BAD_REQUEST),
 
+    // Shipping
+    SHIPMENT_ALREADY_EXISTS(10001, "Shipment already exists for this order", HttpStatus.CONFLICT),
+    SHIPMENT_NOT_FOUND(10002, "Shipment not found", HttpStatus.NOT_FOUND);
+
+
+    ErrorCode(int code, String message, HttpStatus httpStatus) {
+        this.code = code;
+        this.message = message;
+        this.httpStatus = httpStatus;
+    }
+
+    public int getCode() { return code; }
+    public String getMessage() { return message; }
+    public HttpStatus getHttpStatus() { return httpStatus; }
 
     private final int code;
     private final String message;
