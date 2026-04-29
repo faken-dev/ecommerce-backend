@@ -29,7 +29,7 @@ public class RedisTokenFamilyTracking implements TokenFamilyTracking {
         String key = familyKey(userId);
         String currentGenStr = redisTemplate.opsForValue().get(key);
 
-        // No family exists → first token → valid
+        // No family exists Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ first token Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ valid
         if (currentGenStr == null) {
             return true;
         }

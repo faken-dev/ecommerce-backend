@@ -9,6 +9,7 @@ import com.ecommerce.auth.domain.valueobject.Email;
 import com.ecommerce.auth.domain.valueobject.HashedPassword;
 import com.ecommerce.user.domain.entity.UserProfile;
 import com.ecommerce.user.domain.repository.UserProfileRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -19,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Creates a default admin account + user profile on first application startup.
  *
- * <p>Execution is idempotent — it is skipped entirely if an admin account
+ * <p>Execution is idempotent Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â it is skipped entirely if an admin account
  * with the configured email already exists in the database.</p>
  *
  * <p>Password is read from {@code app.bootstrap.admin-password} so it can be
@@ -28,25 +29,17 @@ import org.springframework.transaction.annotation.Transactional;
  * ADMIN_BOOTSTRAP_ENABLED=true ADMIN_BOOTSTRAP_EMAIL=admin@shop.com ADMIN_BOOTSTRAP_PASSWORD=Secret123 java -jar app.jar
  * </pre>
  */
+
 @Slf4j
 @Component
 @Order(1)
+@RequiredArgsConstructor
 public class AdminBootstrapRunner implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserProfileRepository userProfileRepository;
     private final PasswordEncoder passwordEncoder;
-
-    public AdminBootstrapRunner(UserRepository userRepository,
-                                 RoleRepository roleRepository,
-                                 UserProfileRepository userProfileRepository,
-                                 PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
-        this.userProfileRepository = userProfileRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
 
     @Value("${app.bootstrap.admin-email:}")
     private String adminEmail;
@@ -92,10 +85,9 @@ public class AdminBootstrapRunner implements CommandLineRunner {
         }
 
         // Create auth user
-        User admin = User.create(email, HashedPassword.of(passwordEncoder.encode(adminPassword)), "Administrator")
-                .emailVerified(true)
-                .active(true)
-                .build();
+        User admin = User.create(email, HashedPassword.of(passwordEncoder.encode(adminPassword)), "Administrator");
+        admin.setEmailVerified(true);
+        admin.setActive(true);
         admin.addRole(adminRole);
         User saved = userRepository.save(admin);
 
