@@ -3,20 +3,22 @@ package com.ecommerce.user.application.handler;
 import com.ecommerce.auth.domain.event.RegistrationCompletedEvent;
 import com.ecommerce.user.application.usecase.CreateUserProfileUseCase;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 /**
  * Listens to RegistrationCompletedEvent and creates a UserProfile row.
  * If profile creation fails, the exception propagates and causes the
- * entire transaction to roll back — user registration and profile creation
+ * entire transaction to roll back Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â user registration and profile creation
  * are atomic.
  */
-@Slf4j
+
 @Component
 @RequiredArgsConstructor
 public class UserProfileCreatedHandler {
+    private static final Logger log = LoggerFactory.getLogger(UserProfileCreatedHandler.class);
 
     private final CreateUserProfileUseCase createUserProfileUseCase;
 
