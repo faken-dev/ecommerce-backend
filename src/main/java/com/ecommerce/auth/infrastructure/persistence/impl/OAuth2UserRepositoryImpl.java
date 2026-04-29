@@ -12,8 +12,9 @@ import com.ecommerce.auth.infrastructure.persistence.repository.UserJpaRepositor
 import com.ecommerce.shared.exception.BusinessException;
 import com.ecommerce.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
 
@@ -24,14 +25,15 @@ import java.util.Optional;
  *
  * Handles two distinct constraint violations:
  * <ol>
- *   <li>{@code (provider, provider_user_id)} — concurrent race, retry yields the existing user</li>
- *   <li>{@code email} — email already registered via email/password, cannot link to OAuth</li>
+ *   <li>{@code (provider, provider_user_id)} Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â concurrent race, retry yields the existing user</li>
+ *   <li>{@code email} Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â email already registered via email/password, cannot link to OAuth</li>
  * </ol>
  */
 @Repository
 @RequiredArgsConstructor
-@Slf4j
+
 public class OAuth2UserRepositoryImpl implements OAuth2UserRepository {
+    private static final Logger log = LoggerFactory.getLogger(OAuth2UserRepositoryImpl.class);
 
     private final UserJpaRepository jpaRepository;
     private final RoleRepository roleRepository;
@@ -61,7 +63,7 @@ public class OAuth2UserRepositoryImpl implements OAuth2UserRepository {
         } catch (DataIntegrityViolationException e) {
             // Distinguish: email collision vs. concurrent provider+providerUserId race
             if (isEmailConstraintViolation(e)) {
-                log.warn("OAuth login rejected — email already registered via email/password: {}",
+                log.warn("OAuth login rejected Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â email already registered via email/password: {}",
                         email.value());
                 throw new BusinessException(
                         ErrorCode.AUTH_EMAIL_ALREADY_EXISTS,
@@ -70,13 +72,13 @@ public class OAuth2UserRepositoryImpl implements OAuth2UserRepository {
                                 + provider + " account in your profile settings.");
             }
 
-            // Concurrent race: another thread created the user first — retry the lookup
+            // Concurrent race: another thread created the user first Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â retry the lookup
             log.debug("Concurrent OAuth user creation detected, retrying lookup: provider={}, providerUserId={}",
                     provider, providerUserId);
             return jpaRepository.findByProviderAndProviderUserId(provider, providerUserId)
                     .map(mapper::toUser)
                     .orElseThrow(() -> new IllegalStateException(
-                            "OAuth user not found after constraint violation — check unique constraints"));
+                            "OAuth user not found after constraint violation Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â check unique constraints"));
         }
     }
 
@@ -101,10 +103,9 @@ public class OAuth2UserRepositoryImpl implements OAuth2UserRepository {
                                 Email email, String fullName) {
         Role buyerRole = roleRepository.findByName("BUYER")
                 .orElseThrow(() -> new IllegalStateException(
-                        "BUYER role not found — run V1 migration"));
+                        "BUYER role not found Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â run V1 migration"));
 
-        User user = User.createOAuth(provider, providerUserId, email, fullName, null)
-                .build();
+        User user = User.createOAuth(provider, providerUserId, email, fullName, null);
         user.addRole(buyerRole);
         return user;
     }

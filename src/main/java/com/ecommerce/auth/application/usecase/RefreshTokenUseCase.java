@@ -10,14 +10,16 @@ import com.ecommerce.auth.domain.repository.UserRepository;
 import com.ecommerce.shared.exception.BusinessException;
 import com.ecommerce.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
+
 public class RefreshTokenUseCase {
+    private static final Logger log = LoggerFactory.getLogger(RefreshTokenUseCase.class);
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
@@ -29,7 +31,7 @@ public class RefreshTokenUseCase {
      *
      * Each user has a token "family" tracked by a generation counter in Redis.
      * Tokens are issued with the current family generation. If an older-generation
-     * token is presented, the entire family is revoked — the legitimate token
+     * token is presented, the entire family is revoked Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â the legitimate token
      * issued after the attacker's token will also be invalidated, forcing a re-login.
      */
     @Transactional
@@ -38,10 +40,10 @@ public class RefreshTokenUseCase {
                 tokenService.hashForLookup(command.refreshToken()))
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_NOT_FOUND));
 
-        // Check expiry/revocation FIRST — expired tokens must not be rotated
+        // Check expiry/revocation FIRST Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â expired tokens must not be rotated
         oldToken.ensureValid();
 
-        // Replay attack detection: if token.generation < current family generation → attack
+        // Replay attack detection: if token.generation < current family generation Ä‚Â¢Ă¢â‚¬Â Ă¢â‚¬â„¢ attack
         if (!tokenFamilyTracking.isGenerationValid(oldToken.getUserId(), oldToken.getGeneration())) {
             log.warn("Replay attack detected for userId={}, token generation={}",
                     oldToken.getUserId(), oldToken.getGeneration());
@@ -62,7 +64,7 @@ public class RefreshTokenUseCase {
         AuthTokenResponse tokens = tokenService.generateTokens(
                 user, command.deviceInfo(), command.ipAddress());
 
-        // Revoke old token (rotation — no replacement tracking needed)
+        // Revoke old token (rotation Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â no replacement tracking needed)
         oldToken.revoke();
         refreshTokenRepository.save(oldToken);
 

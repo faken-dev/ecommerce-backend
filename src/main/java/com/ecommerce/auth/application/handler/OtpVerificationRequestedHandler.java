@@ -7,20 +7,22 @@ import com.ecommerce.auth.domain.event.OtpVerificationRequestedEvent;
 import com.ecommerce.auth.domain.event.RegistrationCompletedEvent;
 import com.ecommerce.shared.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-@Slf4j
+
 @Component
 @RequiredArgsConstructor
 public class OtpVerificationRequestedHandler {
+    private static final Logger log = LoggerFactory.getLogger(OtpVerificationRequestedHandler.class);
 
     private final SendOtpUseCase sendOtpUseCase;
 
     @EventListener
     public void handle(RegistrationCompletedEvent event) {
-        log.info("Registration completed for userId={} — sending OTP verification",
+        log.info("Registration completed for userId={} Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â sending OTP verification",
                 event.userId());
 
         try {
@@ -30,7 +32,7 @@ public class OtpVerificationRequestedHandler {
                     OtpToken.Purpose.EMAIL_VERIFICATION
             ));
         } catch (BusinessException e) {
-            // OTP send failed — log nhưng không rollback transaction register
+            // OTP send failed Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â log nhÄ‚â€ Ă‚Â°ng khĂ„â€Ă‚Â´ng rollback transaction register
             log.error("Failed to send OTP after registration for userId={}: {}",
                     event.userId(), e.getMessage());
         }
