@@ -1,10 +1,11 @@
 package com.ecommerce.auth.infrastructure.config;
 
 import com.ecommerce.auth.infrastructure.security.JwtAuthenticationFilter;
+import com.ecommerce.auth.infrastructure.security.oauth2.CustomOAuth2UserService;
+import com.ecommerce.auth.infrastructure.security.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
+import com.ecommerce.auth.infrastructure.security.oauth2.OAuth2AuthenticationFailureHandler;
+import com.ecommerce.auth.infrastructure.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
-
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +22,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity          // Enable @PreAuthorize
@@ -28,6 +31,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+    private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
 
     @Value("${app.cors.allowed-origins:http://localhost:5173}")
     private String allowedOrigins;
@@ -36,8 +43,7 @@ public class SecurityConfig {
     private static final String[] PUBLIC_ENDPOINTS = {
             // Auth
             "/api/v1/auth/**",
-            // OAuth2
-            "/login/oauth2/**",
+            // OAuth2 (Handled by filters, no need to permit explicitly unless needed)
             // Catalog — public read endpoints
             "/api/v1/categories/tree",
             "/api/v1/products/public",
@@ -53,7 +59,15 @@ public class SecurityConfig {
             "/actuator/health",
             "/actuator/info",
             // Order — public order status lookup (read-only)
-            "/api/v1/orders/public/**"
+            "/api/v1/orders/public/**",
+            // Payment Callbacks & Webhooks
+            "/api/v1/payments/vnpay-return",
+            "/api/v1/payments/zalopay-return",
+            "/api/v1/payments/webhook/**",
+            // WebSocket
+            "/ws/**",
+            // Chatbot
+            "/api/v1/chatbot/**"
     };
 
     @Bean
@@ -71,6 +85,15 @@ public class SecurityConfig {
                 // JWT filter run before UsernamePasswordAuthenticationFilter
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class)
+                // OAuth2 Login
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authorization -> authorization
+                                .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository))
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService))
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
+                )
                 // Custom 401 response
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint())
