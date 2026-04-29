@@ -1,5 +1,6 @@
 package com.ecommerce.order.domain.entity;
 
+import com.ecommerce.order.domain.event.OrderConfirmedEvent;
 import com.ecommerce.order.domain.event.OrderCancelledEvent;
 import com.ecommerce.order.domain.event.OrderCreatedEvent;
 import com.ecommerce.order.domain.event.OrderStatusChangedEvent;
@@ -7,17 +8,24 @@ import com.ecommerce.shared.domain.AuditableEntity;
 import com.ecommerce.shared.exception.BusinessException;
 import com.ecommerce.shared.exception.ErrorCode;
 import com.github.f4b6a3.uuid.UuidCreator;
-import lombok.Builder;
-import lombok.Getter;
+
+import java.util.Collections;
+
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
+@Setter
+@NoArgsConstructor
+@SuperBuilder
 public class Order extends AuditableEntity {
 
     private UUID buyerId;
@@ -39,12 +47,13 @@ public class Order extends AuditableEntity {
     private long cancelWindowSec;
     private String ipAddress;
     private String userAgent;
+    private String appliedVoucherCode;
     private Instant deletedAt;
 
-    private final List<OrderItem> items = new ArrayList<>();
-    private final List<StatusHistoryEntry> statusHistory = new ArrayList<>();
-
-    // ─── Factory ─────────────────────────────────────────────────────────────
+    @Builder.Default
+    private List<OrderItem> items = new ArrayList<>();
+    @Builder.Default
+    private List<StatusHistoryEntry> statusHistory = new ArrayList<>();
 
     public static Order createOrder(UUID buyerId, UUID sellerId, UUID shippingAddressId,
             List<OrderItem> items, BigDecimal subtotal, BigDecimal shippingFee,
@@ -55,9 +64,8 @@ public class Order extends AuditableEntity {
         BigDecimal total = subtotal
                 .add(shippingFee)
                 .add(taxAmount)
-                .subtract(discountAmount);
+                .subtract(discountAmount != null ? discountAmount : BigDecimal.ZERO);
 
-        // Wire orderId into each item
         items.forEach(item -> item.setOrderId(orderId));
 
         Order order = Order.builder()
@@ -72,33 +80,18 @@ public class Order extends AuditableEntity {
                 .discountAmount(discountAmount != null ? discountAmount : BigDecimal.ZERO)
                 .totalAmount(total)
                 .currency(currency)
-                .paymentMethod(null)
                 .paymentStatus(PaymentStatus.PENDING)
-                .buyerNote(null)
-                .sellerNote(null)
-                .shippingCarrier(null)
-                .trackingNumber(null)
                 .cancelWindowSec(1800L)
                 .ipAddress(ipAddress)
                 .userAgent(userAgent)
-                .deletedAt(null)
                 .build();
-        // Items are added after construction since Order has no items field in builder
-        items.forEach(order::addItem);
 
+        items.forEach(order::addItem);
         order.addStatusHistoryEntry(null, OrderStatus.PENDING, orderId, "SYSTEM", "Order created", null);
 
         return order;
     }
 
-    // ─── Status Transitions ───────────────────────────────────────────────────
-
-    /**
-     * Validates the state machine and transitions to the target status.
-     *
-     * @throws BusinessException with {@link ErrorCode#ORDER_INVALID_STATUS_TRANSITION}
-     *                           when the transition is not allowed.
-     */
     public void transitionTo(OrderStatus newStatus) {
         if (!status.canTransitionTo(newStatus)) {
             throw new BusinessException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION,
@@ -109,31 +102,20 @@ public class Order extends AuditableEntity {
         addStatusHistoryEntry(previous, newStatus, null, null, null, null);
     }
 
-    /**
-     * Confirms payment: PENDING → CONFIRMED and sets paymentStatus to PAID.
-     *
-     * @throws BusinessException with {@link ErrorCode#ORDER_INVALID_STATUS_TRANSITION}
-     *                           when current status is not PENDING.
-     */
     public void confirmPayment() {
         if (this.status != OrderStatus.PENDING) {
             throw new BusinessException(ErrorCode.ORDER_INVALID_STATUS_TRANSITION,
-                    "Cannot confirm payment — order status is %s, expected PENDING".formatted(this.status));
+                    "Cannot confirm payment Ä‚Â¢Ă¢â€Â¬Ă¢â‚¬Â order status is %s, expected PENDING".formatted(this.status));
         }
         this.status = OrderStatus.CONFIRMED;
         this.paymentStatus = PaymentStatus.PAID;
         addStatusHistoryEntry(OrderStatus.PENDING, OrderStatus.CONFIRMED, null, null, "Payment confirmed", null);
     }
 
-    // ─── Cancellation ─────────────────────────────────────────────────────────
+    public void confirmPayment(UUID paymentId) {
+        confirmPayment();
+    }
 
-    /**
-     * Generic cancel guarded by the status state machine.
-     *
-     * @param cancelledBy UUID of the actor who cancelled
-     * @throws BusinessException with {@link ErrorCode#ORDER_CANNOT_BE_CANCELLED}
-     *                           when the transition is not allowed.
-     */
     public void cancel(UUID cancelledBy) {
         if (!status.canTransitionTo(OrderStatus.CANCELLED)) {
             throw new BusinessException(ErrorCode.ORDER_CANNOT_BE_CANCELLED,
@@ -144,13 +126,6 @@ public class Order extends AuditableEntity {
         addStatusHistoryEntry(previous, OrderStatus.CANCELLED, cancelledBy, null, "Cancelled", null);
     }
 
-    /**
-     * Buyer-initiated cancel — additionally validates the cancel window.
-     *
-     * @param buyerId the buyer's UUID (must match the order's buyerId)
-     * @throws BusinessException with {@link ErrorCode#ORDER_CANNOT_BE_CANCELLED}
-     *                           when outside the cancel window or status disallows it.
-     */
     public void cancelByBuyer(UUID buyerId) {
         if (!this.buyerId.equals(buyerId)) {
             throw new BusinessException(ErrorCode.ORDER_CANNOT_BE_CANCELLED,
@@ -158,144 +133,119 @@ public class Order extends AuditableEntity {
         }
         if (!isBuyerCancellable()) {
             throw new BusinessException(ErrorCode.ORDER_CANNOT_BE_CANCELLED,
-                    "Order is not cancellable by buyer (status=%s, elapsedSecs=%d, windowSecs=%d)"
-                            .formatted(status, getElapsedSeconds(), cancelWindowSec));
+                    "Order is not cancellable by buyer");
         }
         cancel(buyerId);
     }
 
-    /**
-     * @return true if the buyer can still cancel within the configured cancel window
-     *         and the order is not in a terminal status.
-     */
     public boolean isBuyerCancellable() {
         return !status.isTerminal() && getElapsedSeconds() < cancelWindowSec;
     }
 
-    /**
-     * @return true if the seller can cancel (status PENDING or CONFIRMED).
-     */
     public boolean isSellerCancellable() {
         return status == OrderStatus.PENDING || status == OrderStatus.CONFIRMED;
     }
 
     private long getElapsedSeconds() {
+        if (getCreatedAt() == null) return 0;
         return Duration.between(getCreatedAt(), Instant.now()).getSeconds();
     }
 
-    // ─── Status History ────────────────────────────────────────────────────────
-
     public void addStatusHistoryEntry(OrderStatus fromStatus, OrderStatus toStatus,
             UUID changedBy, String changedByRole, String reason, String metadata) {
-        StatusHistoryEntry entry = new StatusHistoryEntry(
-                UuidCreator.getTimeOrderedEpoch(),
-                fromStatus,
-                toStatus,
-                changedBy,
-                changedByRole,
-                reason,
-                metadata,
-                Instant.now()
-        );
+        StatusHistoryEntry entry = StatusHistoryEntry.builder()
+                .id(UuidCreator.getTimeOrderedEpoch())
+                .fromStatus(fromStatus)
+                .toStatus(toStatus)
+                .changedBy(changedBy)
+                .changedByRole(changedByRole)
+                .reason(reason)
+                .metadata(metadata)
+                .createdAt(Instant.now())
+                .build();
         this.statusHistory.add(entry);
     }
 
-    public record StatusHistoryEntry(
-            UUID id,
-            OrderStatus fromStatus,
-            OrderStatus toStatus,
-            UUID changedBy,
-            String changedByRole,
-            String reason,
-            String metadata,
-            Instant createdAt
-    ) {}
-
-    // ─── Items ─────────────────────────────────────────────────────────────────
-
-    public void addItem(OrderItem item) {
-        this.items.add(item);
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class StatusHistoryEntry {
+        private UUID id;
+        private OrderStatus fromStatus;
+        private OrderStatus toStatus;
+        private UUID changedBy;
+        private String changedByRole;
+        private String reason;
+        private String metadata;
+        private Instant createdAt;
     }
 
-    // ─── Queries ──────────────────────────────────────────────────────────────
+    public void addItem(OrderItem item) {
+        if (this.items == null) this.items = new ArrayList<>();
+        this.items.add(item);
+    }
 
     public BigDecimal getOrderTotal() {
         return totalAmount;
     }
 
-    // ─── Soft Delete ──────────────────────────────────────────────────────────
-
     public void softDelete() {
         this.deletedAt = Instant.now();
     }
 
-    // ─── Notes ────────────────────────────────────────────────────────────────
-
-    /**
-     * Sets the buyer note after order creation.
-     * Use this instead of rebuilding the Order via Builder,
-     * which would lose items and status history.
-     */
-    public void setBuyerNote(String note) {
-        this.buyerNote = note;
-    }
-
-    // ─── Domain Event Factories ────────────────────────────────────────────────
-    // Convention: every mutating method that has external side-effects (events, DB)
-    // should return a factory method that the application layer calls EventPublisher.publish() on.
-    // Entity NEVER directly publishes events — that is the application layer's responsibility.
-
-    /** Creates the {@link OrderCreatedEvent} after this order has been saved. */
     public OrderCreatedEvent toCreatedEvent() {
+        // Map OrderItems to OrderCreatedEvent.OrderItemData records
+        List<OrderCreatedEvent.OrderItemData> itemData = this.items.stream()
+                .map(item -> new OrderCreatedEvent.OrderItemData(
+                        item.getProductId(),
+                        item.getVariantId(),
+                        item.getQuantity(),
+                        item.getUnitPrice()
+                ))
+                .toList();
+
+        // Collect distinct category IDs from items if available; for now, empty set as placeholder
+        Set<UUID> categoryIds = Collections.emptySet();
+
         return new OrderCreatedEvent(
                 getId(),
                 buyerId,
                 sellerId,
                 totalAmount,
-                Instant.now());
+                discountAmount,
+                appliedVoucherCode,
+                itemData,
+                categoryIds,
+                Instant.now()
+        );
     }
 
-    /** Creates the {@link OrderCancelledEvent} when this order is cancelled. */
     public OrderCancelledEvent toCancelledEvent(UUID cancelledBy) {
-        return new OrderCancelledEvent(getId(), buyerId, cancelledBy, Instant.now());
+        List<OrderCancelledEvent.OrderItemData> itemData = this.items.stream()
+                .map(item -> new OrderCancelledEvent.OrderItemData(
+                        item.getProductId(),
+                        item.getVariantId(),
+                        item.getQuantity()
+                ))
+                .toList();
+        return new OrderCancelledEvent(getId(), buyerId, cancelledBy, itemData, Instant.now());
     }
 
-    /** Creates the {@link OrderStatusChangedEvent} after a status transition completes. */
+    public OrderConfirmedEvent toConfirmedEvent() {
+        List<OrderConfirmedEvent.OrderItemData> itemData = this.items.stream()
+                .map(item -> new OrderConfirmedEvent.OrderItemData(
+                        item.getProductId(),
+                        item.getVariantId(),
+                        item.getQuantity()
+                ))
+                .toList();
+        return new OrderConfirmedEvent(
+                getId(), buyerId, itemData, Instant.now());
+    }
+
     public OrderStatusChangedEvent toStatusChangedEvent(OrderStatus from, OrderStatus to) {
         return new OrderStatusChangedEvent(getId(), from, to, Instant.now());
-    }
-
-    // ─── Builder ──────────────────────────────────────────────────────────────
-
-    @Builder
-    public Order(UUID id, UUID buyerId, UUID sellerId, OrderStatus status,
-            UUID shippingAddressId, BigDecimal subtotal, BigDecimal shippingFee,
-            BigDecimal taxAmount, BigDecimal discountAmount, BigDecimal totalAmount,
-            String currency, String paymentMethod, PaymentStatus paymentStatus,
-            String buyerNote, String sellerNote, String shippingCarrier,
-            String trackingNumber, long cancelWindowSec, String ipAddress,
-            String userAgent, Instant deletedAt,
-            Instant createdAt, Instant updatedAt, UUID createdBy, UUID updatedBy) {
-        super(id, createdAt, updatedAt, createdBy, updatedBy);
-        this.buyerId = buyerId;
-        this.sellerId = sellerId;
-        this.status = status;
-        this.shippingAddressId = shippingAddressId;
-        this.subtotal = subtotal;
-        this.shippingFee = shippingFee;
-        this.taxAmount = taxAmount;
-        this.discountAmount = discountAmount != null ? discountAmount : BigDecimal.ZERO;
-        this.totalAmount = totalAmount;
-        this.currency = currency;
-        this.paymentMethod = paymentMethod;
-        this.paymentStatus = paymentStatus;
-        this.buyerNote = buyerNote;
-        this.sellerNote = sellerNote;
-        this.shippingCarrier = shippingCarrier;
-        this.trackingNumber = trackingNumber;
-        this.cancelWindowSec = cancelWindowSec;
-        this.ipAddress = ipAddress;
-        this.userAgent = userAgent;
-        this.deletedAt = deletedAt;
     }
 }

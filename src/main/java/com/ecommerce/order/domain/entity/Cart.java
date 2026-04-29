@@ -2,8 +2,8 @@ package com.ecommerce.order.domain.entity;
 
 import com.ecommerce.shared.domain.AuditableEntity;
 import com.github.f4b6a3.uuid.UuidCreator;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -13,12 +13,15 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Getter
+@Setter
+@NoArgsConstructor
+@SuperBuilder
 public class Cart extends AuditableEntity {
 
     private UUID buyerId;
-    private List<CartItem> items;
+    @Builder.Default
+    private List<CartItem> items = new ArrayList<>();
 
-    // Factory
     public static Cart createCart(UUID buyerId) {
         return Cart.builder()
                 .id(UuidCreator.getTimeOrderedEpoch())
@@ -27,17 +30,20 @@ public class Cart extends AuditableEntity {
                 .build();
     }
 
-    // Mutation Operations
-
-    public void addItem(UUID productId, UUID variantId, int quantity, BigDecimal unitPrice) {
+    public void addItem(UUID productId, UUID sellerId, String productName, String productImageUrl,
+                        UUID variantId, String variantTitle, int quantity, BigDecimal unitPrice) {
         CartItem existing = findItem(productId, variantId);
         if (existing != null) {
-            existing.quantity += quantity;
+            existing.setQuantity(existing.getQuantity() + quantity);
         } else {
             CartItem item = CartItem.builder()
                     .id(UuidCreator.getTimeOrderedEpoch())
                     .productId(productId)
+                    .sellerId(sellerId)
+                    .productName(productName)
+                    .productImageUrl(productImageUrl)
                     .variantId(variantId)
+                    .variantTitle(variantTitle)
                     .quantity(quantity)
                     .unitPrice(unitPrice)
                     .addedAt(Instant.now())
@@ -48,13 +54,13 @@ public class Cart extends AuditableEntity {
 
     public void updateItemQuantity(UUID productId, UUID variantId, int newQty) {
         CartItem item = findItemOrThrow(productId, variantId);
-        item.quantity = newQty;
+        item.setQuantity(newQty);
     }
 
     public void removeItem(UUID productId, UUID variantId) {
         boolean removed = this.items.removeIf(
-                item -> Objects.equals(item.productId, productId)
-                        && Objects.equals(item.variantId, variantId));
+                item -> Objects.equals(item.getProductId(), productId)
+                        && Objects.equals(item.getVariantId(), variantId));
         if (!removed) {
             throw new IllegalArgumentException(
                     "Cart item not found for productId=" + productId + ", variantId=" + variantId);
@@ -65,24 +71,20 @@ public class Cart extends AuditableEntity {
         this.items.clear();
     }
 
-    // Queries
     public int getItemCount() {
-        return items.stream().mapToInt(item -> item.quantity).sum();
+        return items.stream().mapToInt(CartItem::getQuantity).sum();
     }
 
     public BigDecimal getSubtotal() {
         return items.stream()
-                .map(item -> item.unitPrice.multiply(BigDecimal.valueOf(item.quantity)))
+                .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    // Helpers
     private CartItem findItem(UUID productId, UUID variantId) {
         return items.stream()
-                .filter(item -> Objects.equals(item.productId, productId)
-                        // If variantId is null, match only on productId.
-                        // Otherwise match on both productId AND variantId.
-                        && Objects.equals(item.variantId, variantId))
+                .filter(item -> Objects.equals(item.getProductId(), productId)
+                        && Objects.equals(item.getVariantId(), variantId))
                 .findFirst()
                 .orElse(null);
     }
@@ -96,24 +98,21 @@ public class Cart extends AuditableEntity {
         return item;
     }
 
-    // Inner class — must be public static for OrderDomainMapper (different package)
     @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class CartItem {
         private UUID id;
         private UUID productId;
+        private UUID sellerId;
+        private String productName;
+        private String productImageUrl;
         private UUID variantId;
+        private String variantTitle;
         private int quantity;
         private BigDecimal unitPrice;
         private Instant addedAt;
-    }
-
-    // Builder constructor
-    @Builder
-    public Cart(UUID id, UUID buyerId, List<CartItem> items,
-                Instant createdAt, Instant updatedAt, UUID createdBy, UUID updatedBy) {
-        super(id, createdAt, updatedAt, createdBy, updatedBy);
-        this.buyerId = buyerId;
-        this.items = items != null ? items : new ArrayList<>();
     }
 }
