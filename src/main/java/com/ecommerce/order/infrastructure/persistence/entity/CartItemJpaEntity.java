@@ -25,19 +25,30 @@ public class CartItemJpaEntity extends AuditableJpaEntity {
     @Column(name = "product_id", nullable = false)
     private UUID productId;
 
+    @Column(name = "seller_id")
+    private UUID sellerId;
+
+    @Column(name = "product_name")
+    private String productName;
+
+    @Column(name = "product_image_url")
+    private String productImageUrl;
+
     @Column(name = "variant_id")
     private UUID variantId;
 
+    @Column(name = "variant_title")
+    private String variantTitle;
+
     @Column(nullable = false)
-    private int quantity;
+    @Builder.Default
+    private int quantity = 1;
 
     @Column(name = "unit_price", nullable = false, precision = 19, scale = 4)
     private BigDecimal unitPrice;
 
-    /** Separate timestamp fields not managed by JPA auditing (no parent entity context). */
+    /** Manual timestamp for when the item was added to cart. */
     @Column(name = "added_at", nullable = false, updatable = false)
-    private Instant addedAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    @Builder.Default
+    private Instant addedAt = Instant.now();
 }
