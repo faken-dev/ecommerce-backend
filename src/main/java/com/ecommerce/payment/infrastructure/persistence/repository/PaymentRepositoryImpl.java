@@ -6,6 +6,7 @@ import com.ecommerce.payment.domain.entity.Payment;
 import com.ecommerce.payment.domain.entity.PaymentStatus;
 import com.ecommerce.payment.domain.repository.PaymentRepository;
 import com.ecommerce.payment.infrastructure.persistence.entity.PaymentJpaEntity;
+import com.ecommerce.payment.infrastructure.persistence.entity.RefundJpaEntity;
 import com.ecommerce.payment.infrastructure.persistence.mapper.PaymentDomainMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -54,11 +55,22 @@ public class PaymentRepositoryImpl implements PaymentRepository {
                     existing.setUserAgent(payment.getUserAgent());
                     existing.setVersion(payment.getVersion());
                     // Sync refunds
-                    existing.getRefunds().clear();
-                    payment.getRefunds().forEach(refund -> {
-                        if (refund.getDeletedAt() == null) {
-                            existing.addRefund(mapper.toRefundJpa(refund, existing));
-                        }
+                    List<RefundJpaEntity> currentRefunds = existing.getRefunds();
+                    // Remove orphans
+                    currentRefunds.removeIf(existingJpa -> 
+                        payment.getRefunds().stream().noneMatch(d -> d.getId().equals(existingJpa.getId())));
+                    
+                    // Update or Add
+                    payment.getRefunds().forEach(domainRefund -> {
+                        if (domainRefund.getDeletedAt() != null) return;
+                        
+                        currentRefunds.stream()
+                            .filter(r -> r.getId().equals(domainRefund.getId()))
+                            .findFirst()
+                            .ifPresentOrElse(
+                                existingJpa -> mapper.updateRefundJpa(domainRefund, existingJpa),
+                                () -> existing.addRefund(mapper.toRefundJpa(domainRefund, existing))
+                            );
                     });
                     return mapper.toDomain(jpaRepository.save(existing));
                 })

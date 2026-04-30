@@ -57,6 +57,13 @@ public interface PaymentDomainMapper {
     RefundJpaEntity toRefundJpa(Refund domain,
                                  @Context PaymentJpaEntity payment);
 
+    @Mapping(target = "payment", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "updatedBy", ignore = true)
+    void updateRefundJpa(Refund domain, @MappingTarget RefundJpaEntity entity);
+
     // - Collections ----------
 
     /**
