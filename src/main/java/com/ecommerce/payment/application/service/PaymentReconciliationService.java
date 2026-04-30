@@ -57,7 +57,22 @@ public class PaymentReconciliationService {
         for (Payment payment : stuckPayments) {
             Timer.Sample sample = Timer.start(meterRegistry);
             try {
-                transactionTemplate.executeWithoutResult(status -> reconcileSingle(payment));
+                // 1. Call checker outside transaction to avoid holding DB connections during I/O
+                PaymentStatusChecker checker = gatewayResolver.getStatusChecker(payment.getProvider());
+                PaymentStatusChecker.ReconciliationResult result = checker.checkStatus(
+                        payment.getId(),
+                        payment.getOrderId().toString(),
+                        payment.getProvider(),
+                        payment.getProviderReference()
+                );
+
+                // 2. Perform update inside a fresh transaction
+                transactionTemplate.executeWithoutResult(status -> {
+                    // Reload the payment to ensure we have the latest version (optimistic locking)
+                    paymentRepository.findById(payment.getId()).ifPresent(latest -> {
+                        applyReconciliation(latest, result);
+                    });
+                });
                 meterRegistry.counter("payment.reconciliation.success").increment();
             } catch (Exception e) {
                 log.error("[Reconciliation] Failed to reconcile payment {}", payment.getId(), e);
@@ -68,18 +83,9 @@ public class PaymentReconciliationService {
         }
     }
 
-    public void reconcileSingle(Payment payment) {
-        log.info("[Reconciliation] Reconciling payment {} (current status: {})", 
-                payment.getId(), payment.getStatus());
-
-        PaymentStatusChecker checker = gatewayResolver.getStatusChecker(payment.getProvider());
-        
-        PaymentStatusChecker.ReconciliationResult result = checker.checkStatus(
-                payment.getId(),
-                payment.getOrderId().toString(),
-                payment.getProvider(),
-                payment.getProviderReference()
-        );
+    private void applyReconciliation(Payment payment, PaymentStatusChecker.ReconciliationResult result) {
+        log.info("[Reconciliation] Applying result for payment {} (status: {} -> gateway: {})", 
+                payment.getId(), payment.getStatus(), result.status());
 
         // Handle uninitiated stuck payments (missing reference)
         if ("MISSING_REFERENCE".equals(result.failureCode()) && payment.getStatus() == PaymentStatus.PENDING) {
@@ -90,22 +96,26 @@ public class PaymentReconciliationService {
             return;
         }
 
-        // Only update if status has changed or we received a new provider reference
-        boolean changed = false;
-
+        boolean updated = false;
         if (result.status() != payment.getStatus()) {
-            log.info("[Reconciliation] Status change detected for {}: {} -> {}", 
-                    payment.getId(), payment.getStatus(), result.status());
-            
-            if (result.status() == PaymentStatus.PAID) {
-                payment.confirm(result.providerReference(), result.paidAt());
-            } else if (result.status().isFailed()) {
-                payment.fail(result.failureCode(), result.failureReason());
+            try {
+                if (result.status() == PaymentStatus.PAID) {
+                    payment.confirm(result.providerReference(), result.paidAt());
+                    updated = true;
+                } else if (result.status().isFailed()) {
+                    payment.fail(result.failureCode(), result.failureReason());
+                    updated = true;
+                } else {
+                    log.warn("[Reconciliation] Unexpected status change detected for {}: {} -> {} (ignored)", 
+                            payment.getId(), payment.getStatus(), result.status());
+                }
+            } catch (Exception e) {
+                log.error("[Reconciliation] Invalid status transition for payment {}: {} -> {} ({})", 
+                        payment.getId(), payment.getStatus(), result.status(), e.getMessage());
             }
-            changed = true;
         }
 
-        if (changed) {
+        if (updated) {
             Payment saved = paymentRepository.save(payment);
             
             // Publish event via outbox if status changed to terminal
