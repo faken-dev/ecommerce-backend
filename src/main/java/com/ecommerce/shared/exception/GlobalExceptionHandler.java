@@ -2,7 +2,6 @@ package com.ecommerce.shared.exception;
 
 import com.ecommerce.shared.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -12,12 +11,17 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Slf4j
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     // 1. Business Exception
     @ExceptionHandler(BusinessException.class)
@@ -66,8 +70,8 @@ public class GlobalExceptionHandler {
     }
 
     // 4. Missing / Wrong Parameter Type
-    @ExceptionHandler({org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class, 
-                       org.springframework.web.bind.MissingServletRequestParameterException.class})
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class, 
+                       MissingServletRequestParameterException.class})
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(Exception ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -84,3 +88,5 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCode.INTERNAL_SERVER_ERROR));
     }
 }
+
+
