@@ -13,5 +13,8 @@ public record ProductSummaryResponse(
     String status,
     boolean isFeatured,
     BigDecimal averageRating,
-    int reviewCount
+    int reviewCount,
+    String imageUrl,
+    UUID categoryId,
+    String categoryName
 ) {}

@@ -11,6 +11,7 @@ public record ProductResponse(
     String name,
     String slug,
     String description,
+    String descriptionHtml,
     BigDecimal price,
     BigDecimal compareAtPrice,
     BigDecimal costPerItem,
@@ -19,6 +20,7 @@ public record ProductResponse(
     String sku,
     String barcode,
     UUID categoryId,
+    String categoryName,
     List<String> tags,
     String status,
     boolean isFeatured,
@@ -29,6 +31,9 @@ public record ProductResponse(
     int reviewCount,
     BigDecimal weightKg,
     String weightUnit,
+    String imageUrl,
+    String threeDModelUrl,
+    List<ProductImageResponse> images,
     Instant createdAt,
     Instant updatedAt
 ) {}
