@@ -2,14 +2,14 @@ package com.ecommerce.notification.application.handler;
 
 import com.ecommerce.auth.domain.event.OtpRequestedEvent;
 import com.ecommerce.auth.domain.event.WelcomeEmailRequestedEvent;
-import com.ecommerce.auth.domain.repository.OtpTokenRepository;
 import com.ecommerce.notification.application.port.NotificationChannel;
 import com.ecommerce.notification.application.port.NotificationMessage;
 import com.ecommerce.notification.application.port.NotificationSender;
 import com.ecommerce.notification.domain.NotificationTemplate;
 import com.ecommerce.notification.infrastructure.NotificationDlqRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -17,22 +17,21 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-@Slf4j
+
 @Component
 @RequiredArgsConstructor
 public class OtpNotificationHandler {
+    private static final Logger log = LoggerFactory.getLogger(OtpNotificationHandler.class);
 
     private final List<NotificationSender> senders;
     private final NotificationDlqRepository dlqRepository;
-    private final OtpTokenRepository otpTokenRepository;
 
     @Value("${app.otp.expiry-minutes}")
     private int otpExpiryMinutes;
 
     /**
-     * Handles OtpRequestedEvent — sends OTP via EMAIL / SMS / WhatsApp.
+     * Handles OtpRequestedEvent - sends OTP via EMAIL / SMS / WhatsApp.
      */
     @Async
     @EventListener
@@ -43,21 +42,15 @@ public class OtpNotificationHandler {
             return;
         }
 
-    
-        Optional<String> rawOtpOpt = otpTokenRepository.getRawOtp(
-                event.userId(), event.purpose());
-
-        if (rawOtpOpt.isEmpty()) {
-            log.error("Raw OTP not found in Redis for userId={}, purpose={}",
-                    event.userId(), event.purpose());
+        String rawOtp = event.otpCode();
+        if (rawOtp == null || rawOtp.isBlank()) {
+            log.error("No OTP code in OtpRequestedEvent for userId={}", event.userId());
             dlqRepository.push(
                     buildFallbackMessage(event, destination),
-                    "RAW_OTP_NOT_FOUND_IN_CACHE");
+                    "MISSING_OTP_CODE_IN_EVENT");
             return;
         }
-        String rawOtp = rawOtpOpt.get();
 
-    
         NotificationChannel channel = NotificationChannel.from(event.channel());
         NotificationMessage message = buildOtpMessage(rawOtp, event, channel, destination);
 
@@ -88,7 +81,7 @@ public class OtpNotificationHandler {
     }
 
     /**
-     * Handles WelcomeEmailRequestedEvent — sends welcome email after verify.
+     * Handles WelcomeEmailRequestedEvent - sends welcome email after verify.
      */
     @Async
     @EventListener
