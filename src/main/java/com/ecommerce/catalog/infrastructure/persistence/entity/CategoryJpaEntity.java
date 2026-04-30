@@ -32,8 +32,10 @@ public class CategoryJpaEntity extends AuditableJpaEntity {
     private String iconUrl;
 
     @Column(name = "sort_order", nullable = false)
-    private int sortOrder;
+    @Builder.Default
+    private int sortOrder = 0;
 
     @Column(name = "is_active", nullable = false)
-    private boolean active;
+    @Builder.Default
+    private boolean active = true;
 }

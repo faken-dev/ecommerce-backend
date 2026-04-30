@@ -35,9 +35,6 @@ public class ProductVariantJpaEntity extends AuditableJpaEntity {
     @Column(name = "compare_at_price", precision = 19, scale = 4)
     private BigDecimal compareAtPrice;
 
-    @Column(name = "stock_quantity", nullable = false)
-    private int stockQuantity;
-
     @Column(name = "option_name", nullable = false, length = 50)
     private String optionName;
 
@@ -54,8 +51,10 @@ public class ProductVariantJpaEntity extends AuditableJpaEntity {
     private String imageUrl;
 
     @Column(name = "sort_order", nullable = false)
-    private int sortOrder;
+    @Builder.Default
+    private int sortOrder = 0;
 
     @Column(name = "is_active", nullable = false)
-    private boolean active;
+    @Builder.Default
+    private boolean active = true;
 }
