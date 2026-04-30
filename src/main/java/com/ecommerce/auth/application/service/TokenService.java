@@ -11,14 +11,17 @@ import com.ecommerce.auth.infrastructure.security.JwtTokenProvider;
 import com.ecommerce.auth.infrastructure.security.TokenHasher;
 import com.ecommerce.shared.event.EventPublisher;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -29,13 +32,14 @@ import java.util.UUID;
  * LoginUseCase, AuthTokenOtpHandler, and EmailVerifiedHandler.
  *
  * <p>Redis and DB writes are wrapped in a Redis transaction (MULTI/EXEC) so that
- * BOTH either succeed or BOTH rollback — eliminating the orphaned Redis entry
+ * BOTH either succeed or BOTH rollback - eliminating the orphaned Redis entry
  * that the previous try/catch approach could not fully guarantee.
  */
-@Slf4j
+
 @Service
 @RequiredArgsConstructor
 public class TokenService {
+    private static final Logger log = LoggerFactory.getLogger(TokenService.class);
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenHasher tokenHasher;
@@ -56,7 +60,7 @@ public class TokenService {
      * and publishes an audit event. Returns tokens directly to the caller.
      *
      * <p>Redis and DB writes are atomic: if either fails, neither is committed.
-     * We use a Redis WATCH on the family key as an optimistic lock — if another
+     * We use a Redis WATCH on the family key as an optimistic lock - if another
      * request advances the family between our read and write, the transaction
      * aborts and we retry (up to 3 times).
      *
@@ -77,9 +81,9 @@ public class TokenService {
         RefreshToken refreshToken = RefreshToken.create(
                 user.getId(), tokenHash, deviceInfo, ipAddress, refreshExpirationMs, newGeneration);
 
-        // ── Atomic Redis + DB write via Redis MULTI/EXEC ───────────────────────
+        // - Atomic Redis + DB write via Redis MULTI/EXEC -----------
         // If DB save throws, the EXEC is never called → Redis side-effect rolls back.
-        // If Redis WATCH fails (concurrent modification), we retry up to 3×.
+        // If Redis WATCH fails (concurrent modification), we retry up to 3.
         executeAtomicTokenCreation(user.getId(), newGeneration, refreshToken);
 
         eventPublisher.publish(new LoginCompletedEvent(user.getId(), Instant.now()));
@@ -94,7 +98,7 @@ public class TokenService {
      *
      * <p>Uses WATCH as an optimistic lock on the family key. If another thread
      * modifies the key between our WATCH and EXEC, Redis aborts the transaction
-     * (exec() returns null) and we retry with a fresh WATCH — up to 3 times.
+     * (exec() returns null) and we retry with a fresh WATCH - up to 3 times.
      *
      * @param userId       user's UUID
      * @param generation   the new generation number
@@ -102,7 +106,7 @@ public class TokenService {
      */
     private void executeAtomicTokenCreation(UUID userId, long generation, RefreshToken refreshToken) {
         final String familyKey = "token:family:" + userId;
-        final long ttlSeconds = java.time.Duration.ofDays(7).toSeconds();
+        final long ttlSeconds = Duration.ofDays(7).toSeconds();
 
         for (int attempt = 1; attempt <= 3; attempt++) {
             RedisCallback<List<?>> callback = connection -> {
@@ -117,7 +121,7 @@ public class TokenService {
             List<?> result = redisTemplate.execute(callback);
 
             if (result != null) {
-                // Redis WATCH/MULTI succeeded — proceed to DB save.
+                // Redis WATCH/MULTI succeeded - proceed to DB save.
                 // If DB fails, @Transactional rolls back the entire method.
                 refreshTokenRepository.save(refreshToken);
                 return; // success
@@ -145,7 +149,7 @@ public class TokenService {
      */
     @SuppressWarnings("deprecation")
     private void setExInConnection(
-            org.springframework.data.redis.connection.RedisConnection connection,
+            RedisConnection connection,
             String key, long ttlSeconds, long generation) {
         connection.setEx(
                 key.getBytes(StandardCharsets.UTF_8),
