@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Invoice</title>
+    <style>
+        @page {
+            margin: 0.5cm;
+            size: A4;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 11px;
+            color: #1e293b;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            background-color: #fff;
+        }
+        .brand-section {
+            width: 100%;
+            margin-bottom: 40px;
+        }
+        .brand-logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4f46e5; /* Indigo-600 */
+            letter-spacing: -0.5px;
+        }
+        .company-details {
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+        .invoice-meta {
+            text-align: right;
+        }
+        .invoice-id {
+            font-size: 18px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+        .meta-label {
+            font-size: 9px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .title-banner {
+            background-color: #f8fafc;
+            border-left: 5px solid #4f46e5;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .h1-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin: 0;
+            color: #1e1b4b;
+            letter-spacing: 1px;
+        }
+        .billing-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 40px;
+            border-collapse: collapse;
+        }
+        .billing-col {
+            display: table-cell;
+            width: 50%;
+            padding: 15px;
+            background: #ffffff;
+            border: 1px solid #f1f5f9;
+        }
+        .section-header {
+            font-size: 10px;
+            font-weight: bold;
+            color: #4f46e5;
+            text-transform: uppercase;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        .customer-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 3px;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+        }
+        .items-table th {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-weight: bold;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .items-table td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: top;
+        }
+        .text-right { text-align: right; }
+        .product-name {
+            font-weight: bold;
+            color: #0f172a;
+            font-size: 12px;
+        }
+        .product-desc {
+            font-size: 9px;
+            color: #64748b;
+        }
+        .summary-section {
+            width: 300px;
+            float: right;
+        }
+        .summary-row {
+            display: table;
+            width: 100%;
+            padding: 5px 0;
+            font-size: 12px;
+        }
+        .summary-label {
+            display: table-cell;
+            color: #64748b;
+        }
+        .summary-value {
+            display: table-cell;
+            text-align: right;
+            font-weight: bold;
+            color: #0f172a;
+        }
+        .grand-total {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #4f46e5;
+            font-size: 18px;
+            color: #4f46e5;
+        }
+        .amount-words {
+            clear: both;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            font-style: italic;
+            border: 1px dashed #cbd5e1;
+        }
+        .footer-note {
+            margin-top: 60px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 9px;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 20px;
+        }
+        .signatures {
+            margin-top: 50px;
+            width: 100%;
+        }
+        .sig-box {
+            width: 50%;
+            text-align: center;
+            display: table-cell;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="brand-section">
+            <table style="width: 100%;">
+                <tr>
+                    <td style="width: 60%;">
+                        <div class="brand-logo">LANDO PLATFORM</div>
+                        <div class="company-details">
+                            Công ty TNHH Giải pháp Thương mại Lando<br/>
+                            Số 7, CVPM Quang Trung, Quận 12, TP. Hồ Chí Minh<br/>
+                            MST: 0312345678 | Hotline: 1900 6789
+                        </div>
+                    </td>
+                    <td style="width: 40%;" class="text-right">
+                        <div class="meta-label">Mã hóa đơn</div>
+                        <div class="invoice-id" th:text="${#strings.substring(order.id,0,8).toUpperCase()}">#019DBF57</div>
+                        <div class="meta-label" style="margin-top: 10px;">Ngày lập</div>
+                        <div style="font-weight: bold;" th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">24/04/2026</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="title-banner">
+            <h1 class="h1-title">HÓA ĐƠN GIÁ TRỊ GIA TĂNG</h1>
+        </div>
+
+        <div class="billing-grid">
+            <div class="billing-col">
+                <div class="section-header">Người mua hàng</div>
+                <div class="customer-name" th:text="${buyerName}">Administrator</div>
+                <div th:text="${buyerPhone}">090xxxxxxxx</div>
+                <div th:text="${shippingAddress}">admin@fakenshop.com</div>
+            </div>
+            <div class="billing-col">
+                <div class="section-header">Thông tin thanh toán</div>
+                <div style="font-weight: bold;" th:text="${order.paymentMethod != null ? order.paymentMethod : 'Thanh toán khi nhận hàng'}">Tiền mặt</div>
+                <div>Trạng thái: <span th:text="${order.paymentStatus}" style="font-weight: bold; color: #059669;">PAID</span></div>
+            </div>
+        </div>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">#</th>
+                    <th style="width: 55%;">Sản phẩm / Mô tả</th>
+                    <th style="width: 10%;" class="text-right">SL</th>
+                    <th style="width: 15%;" class="text-right">Đơn giá</th>
+                    <th style="width: 15%;" class="text-right">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item, iter : ${order.items}">
+                    <td th:text="${iter.index + 1}">1</td>
+                    <td>
+                        <div class="product-name" th:text="${item.productName}">Sản phẩm</div>
+                        <div class="product-desc" th:text="${item.variantTitle}">Biến thể</div>
+                    </td>
+                    <td class="text-right" th:text="${item.quantity}">1</td>
+                    <td class="text-right" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">1.000.000</td>
+                    <td class="text-right" th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">1.000.000</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="summary-section">
+            <div class="summary-row">
+                <div class="summary-label">Cộng tiền hàng:</div>
+                <div class="summary-value" th:text="${#numbers.formatDecimal(order.subtotal != null ? order.subtotal : 0, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">1.300.000</div>
+            </div>
+            <div class="summary-row">
+                <div class="summary-label">Phí vận chuyển:</div>
+                <div class="summary-value" th:text="${#numbers.formatDecimal(order.shippingFee != null ? order.shippingFee : 0, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0</div>
+            </div>
+            <div class="summary-row" th:if="${order.discountAmount != null && order.discountAmount > 0}">
+                <div class="summary-label" style="color: #e11d48;">Chiết khấu:</div>
+                <div class="summary-value" style="color: #e11d48;" th:text="${'-' + #numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">-100.000</div>
+            </div>
+            <div class="summary-row grand-total">
+                <div class="summary-label" style="font-weight: bold; color: #4f46e5;">TỔNG CỘNG:</div>
+                <div class="summary-value" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">1.200.000</div>
+            </div>
+        </div>
+
+        <div class="amount-words">
+            <strong>Số tiền bằng chữ:</strong> <span th:text="${totalInWords}">...</span>
+        </div>
+
+        <div class="signatures">
+            <div class="sig-box">
+                <div style="font-weight: bold; margin-bottom: 50px;">Người mua hàng</div>
+                <div style="font-size: 9px; color: #94a3b8;">(Ký và ghi rõ họ tên)</div>
+            </div>
+            <div class="sig-box">
+                <div style="font-weight: bold;">Người bán hàng</div>
+                <div style="font-size: 9px; color: #94a3b8; margin-bottom: 50px;">(Ký, đóng dấu)</div>
+                <div style="font-weight: bold; color: #4f46e5;">LANDO PLATFORM</div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ của Lando Platform.<br/>
+            Hóa đơn điện tử này có giá trị pháp lý theo quy định hiện hành.
+        </div>
+    </div>
+</body>
+</html>
