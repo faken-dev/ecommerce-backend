@@ -2,20 +2,24 @@ package com.ecommerce.order.domain.entity;
 
 import com.ecommerce.shared.domain.AuditableEntity;
 import com.github.f4b6a3.uuid.UuidCreator;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.UUID;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@SuperBuilder
 public class OrderItem extends AuditableEntity {
 
     private UUID orderId;
     private UUID productId;
+    private UUID categoryId;
     private String productName;
     private String productSku;
     private String productImageUrl;
@@ -28,7 +32,7 @@ public class OrderItem extends AuditableEntity {
     private int refundedQuantity;
     private BigDecimal refundedAmount;
 
-    public static OrderItemBuilder create(UUID orderId, UUID productId, String productName,
+    public static OrderItem create(UUID orderId, UUID productId, UUID categoryId, String productName,
             String productSku, String productImageUrl,
             UUID variantId, String variantTitle,
             int quantity, BigDecimal unitPrice) {
@@ -37,6 +41,7 @@ public class OrderItem extends AuditableEntity {
                 .id(UuidCreator.getTimeOrderedEpoch())
                 .orderId(orderId)
                 .productId(productId)
+                .categoryId(categoryId)
                 .productName(productName)
                 .productSku(productSku)
                 .productImageUrl(productImageUrl)
@@ -47,7 +52,8 @@ public class OrderItem extends AuditableEntity {
                 .totalPrice(total)
                 .discountAmount(BigDecimal.ZERO)
                 .refundedQuantity(0)
-                .refundedAmount(BigDecimal.ZERO);
+                .refundedAmount(BigDecimal.ZERO)
+                .build();
     }
 
     public void applyDiscount(BigDecimal amount) {
@@ -62,27 +68,5 @@ public class OrderItem extends AuditableEntity {
 
     public boolean isFullyRefunded() {
         return refundedQuantity >= quantity;
-    }
-
-    @Builder
-    public OrderItem(UUID id, UUID orderId, UUID productId, String productName,
-            String productSku, String productImageUrl, UUID variantId, String variantTitle,
-            int quantity, BigDecimal unitPrice, BigDecimal totalPrice,
-            BigDecimal discountAmount, int refundedQuantity, BigDecimal refundedAmount,
-            Instant createdAt, Instant updatedAt, UUID createdBy, UUID updatedBy) {
-        super(id, createdAt, updatedAt, createdBy, updatedBy);
-        this.orderId = orderId;
-        this.productId = productId;
-        this.productName = productName;
-        this.productSku = productSku;
-        this.productImageUrl = productImageUrl;
-        this.variantId = variantId;
-        this.variantTitle = variantTitle;
-        this.quantity = quantity;
-        this.unitPrice = unitPrice;
-        this.totalPrice = totalPrice;
-        this.discountAmount = discountAmount != null ? discountAmount : BigDecimal.ZERO;
-        this.refundedQuantity = refundedQuantity;
-        this.refundedAmount = refundedAmount != null ? refundedAmount : BigDecimal.ZERO;
     }
 }
