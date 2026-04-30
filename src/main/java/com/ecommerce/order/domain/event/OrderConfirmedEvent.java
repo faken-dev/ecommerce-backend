@@ -4,10 +4,13 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public record OrderCancelledEvent(
+/**
+ * Published when an order's payment is successfully confirmed.
+ * This event triggers side effects like stock deduction and shipping initiation.
+ */
+public record OrderConfirmedEvent(
         UUID orderId,
         UUID buyerId,
-        UUID cancelledBy,
         List<OrderItemData> items,
         Instant occurredAt
 ) {
