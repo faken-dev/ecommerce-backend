@@ -14,5 +14,7 @@ public record UpdateProductCommand(
         UUID categoryId,
         List<String> tags,
         String metaTitle,
-        String metaDescription
+        String metaDescription,
+        String threeDModelUrl,
+        List<ProductImageCommand> images
 ) {}
