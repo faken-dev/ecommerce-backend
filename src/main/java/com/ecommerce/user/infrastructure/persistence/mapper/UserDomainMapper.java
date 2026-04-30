@@ -9,14 +9,14 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface UserDomainMapper {
 
-    // ── UserProfile ────────────────────────────────────────
+    // ── UserProfile ──
     UserProfile toDomain(UserProfileJpaEntity jpa);
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "gender", source = "gender")
     UserProfileJpaEntity toJpa(UserProfile domain);
 
-    // ── Address ─────────────────────────────────────────────
+    // ── Address ──
     Address toDomain(AddressJpaEntity jpa);
 
 
