@@ -33,9 +33,18 @@ public class AuthController {
     private final VerifyOtpUseCase verifyOtpUseCase;
     private final ForgotPasswordUseCase forgotPasswordUseCase;
     private final ResetPasswordUseCase resetPasswordUseCase;
+    private final GetUserInfoUseCase getUserInfoUseCase;
     private final TokenService tokenService;
 
     // ── Auth Endpoints ─────────────────────────────────────────────────
+
+    @GetMapping("/me")
+    @Operation(summary = "Get current authenticated user info",
+               security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(
+            @AuthenticationPrincipal UUID userId) {
+        return ResponseEntity.ok(ApiResponse.ok(getUserInfoUseCase.execute(userId)));
+    }
 
     @PostMapping("/register")
     @Operation(summary = "Register a new account")
