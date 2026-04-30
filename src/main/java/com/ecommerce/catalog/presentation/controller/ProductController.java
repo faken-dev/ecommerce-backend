@@ -3,6 +3,7 @@ package com.ecommerce.catalog.presentation.controller;
 import com.ecommerce.catalog.application.command.ActivateProductCommand;
 import com.ecommerce.catalog.application.command.AdjustStockCommand;
 import com.ecommerce.catalog.application.command.CreateProductCommand;
+import com.ecommerce.catalog.application.command.ProductImageCommand;
 import com.ecommerce.catalog.application.command.UpdateProductCommand;
 import com.ecommerce.catalog.application.dto.ProductResponse;
 import com.ecommerce.catalog.application.dto.ProductSummaryResponse;
@@ -28,7 +29,7 @@ import java.util.UUID;
  * Product management.
  *
  * Public:  GET /public/*   (anyone can browse/search)
- * Seller:  POST / PUT / DELETE /stock  (owner only — SELLER or ADMIN role)
+ * Seller:  POST / PUT / DELETE /stock (only product owner or admin)
  */
 @RestController
 @RequestMapping("/api/v1/products")
@@ -62,10 +63,11 @@ public class ProductController {
     @GetMapping("/public/search")
     @Operation(summary = "Search products by name or description")
     public ResponseEntity<ApiResponse<List<ProductSummaryResponse>>> search(
-            @RequestParam String q,
+            @RequestParam(required = false, defaultValue = "") String q,
+            @RequestParam(required = false) UUID categoryId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(searchProductsUseCase.search(q, page, size));
+        return ResponseEntity.ok(searchProductsUseCase.search(q, categoryId, page, size));
     }
 
     @GetMapping("/public/category/{categoryId}")
@@ -77,15 +79,15 @@ public class ProductController {
         return ResponseEntity.ok(searchProductsUseCase.byCategory(categoryId, page, size));
     }
 
-    @GetMapping("/public/{productId}")
-    @Operation(summary = "Get a single product by ID")
+    @GetMapping("/public/{identifier}")
+    @Operation(summary = "Get a single product by ID or Slug")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
     })
     public ResponseEntity<ApiResponse<ProductResponse>> getPublicProduct(
-            @PathVariable UUID productId) {
-        ProductResponse response = getProductUseCase.execute(productId);
+            @PathVariable String identifier) {
+        ProductResponse response = getProductUseCase.executeByIdentifier(identifier);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
@@ -105,7 +107,7 @@ public class ProductController {
     public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
             @AuthenticationPrincipal UUID sellerId,
             @Valid @RequestBody CreateProductRequest req) {
-        // Force sellerId from JWT token — prevents spoofing sellerId in body
+        // Force sellerId from JWT token - prevents spoofing sellerId in body
         ProductResponse response = createProductUseCase.execute(
                 new CreateProductCommand(
                         sellerId,
@@ -123,9 +125,20 @@ public class ProductController {
                         req.metaTitle(),
                         req.metaDescription(),
                         req.weightKg(),
-                        req.weightUnit()));
+                        req.weightUnit(),
+                        req.threeDModelUrl(),
+                        req.images() != null ? req.images().stream().map(img -> new ProductImageCommand(img.url(), img.altText(), img.sortOrder(), img.primary())).toList() : List.of()));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(response, "Product created successfully"));
+    }
+
+    @GetMapping("/admin")
+    @PreAuthorize("hasAuthority('product:read')")
+    @Operation(summary = "List all products (admin dashboard)")
+    public ResponseEntity<ApiResponse<List<ProductSummaryResponse>>> allProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(searchProductsUseCase.allForAdmin(page, size));
     }
 
     @GetMapping("/me")
@@ -169,7 +182,9 @@ public class ProductController {
                         req.categoryId(),
                         req.tags(),
                         req.metaTitle(),
-                        req.metaDescription()));
+                        req.metaDescription(),
+                        req.threeDModelUrl(),
+                        req.images() != null ? req.images().stream().map(img -> new ProductImageCommand(img.url(), img.altText(), img.sortOrder(), img.primary())).toList() : List.of()));
         return ResponseEntity.ok(ApiResponse.ok(response, "Product updated successfully"));
     }
 
@@ -217,3 +232,8 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.ok(null, "Stock adjusted"));
     }
 }
+
+
+
+
+
