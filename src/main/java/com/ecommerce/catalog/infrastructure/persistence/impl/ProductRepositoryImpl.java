@@ -9,8 +9,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -30,13 +34,18 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
+    public Optional<Product> findBySlug(String slug) {
+        return jpaRepository.findBySlugAndDeletedAtIsNull(slug).map(mapper::toProduct);
+    }
+
+    @Override
     public Optional<Product> findBySellerIdAndSlug(UUID sellerId, String slug) {
         return jpaRepository.findActiveBySellerIdAndSlug(sellerId, slug).map(mapper::toProduct);
     }
 
     @Override
-    public Page<Product> searchByQuery(String query, Pageable pageable) {
-        return jpaRepository.searchByQuery(query, pageable).map(mapper::toProduct);
+    public Page<Product> search(String query, Collection<UUID> categoryIds, Pageable pageable) {
+        return jpaRepository.search(query, categoryIds, pageable).map(mapper::toProduct);
     }
 
     @Override
@@ -67,8 +76,25 @@ public class ProductRepositoryImpl implements ProductRepository {
     @Override
     public void softDelete(UUID id) {
         jpaRepository.findById(id).ifPresent(entity -> {
-            entity.setDeletedAt(java.time.Instant.now());
+            entity.setDeletedAt(Instant.now());
             jpaRepository.save(entity);
         });
+    }
+
+    @Override
+    public long countBySeller(UUID sellerId) {
+        return jpaRepository.countBySellerIdAndDeletedAtIsNull(sellerId);
+    }
+
+    @Override
+    public Page<Product> findAll(Pageable pageable) {
+        return jpaRepository.findAllByDeletedAtIsNull(pageable).map(mapper::toProduct);
+    }
+
+    @Override
+    public List<Product> findAllByIds(List<UUID> ids) {
+        return jpaRepository.findAllByIdInAndDeletedAtIsNull(ids).stream()
+                .map(mapper::toProduct)
+                .collect(Collectors.toList());
     }
 }
