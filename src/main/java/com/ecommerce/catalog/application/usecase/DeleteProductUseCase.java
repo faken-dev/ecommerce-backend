@@ -5,6 +5,7 @@ import com.ecommerce.catalog.domain.repository.ProductRepository;
 import com.ecommerce.shared.event.EventPublisher;
 import com.ecommerce.shared.exception.BusinessException;
 import com.ecommerce.shared.exception.ErrorCode;
+import com.ecommerce.audit.domain.annotation.Audited;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ public class DeleteProductUseCase {
     private final ProductRepository productRepository;
     private final EventPublisher eventPublisher;
 
+    @Audited(action = "DELETE_PRODUCT", resource = "PRODUCT")
     @Transactional
     public void execute(UUID productId) {
         Product product = productRepository.findById(productId)

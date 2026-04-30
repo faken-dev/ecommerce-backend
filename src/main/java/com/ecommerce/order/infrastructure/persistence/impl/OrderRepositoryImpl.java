@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,24 +33,16 @@ public class OrderRepositoryImpl implements OrderRepository {
     @Override
     public Order save(Order order) {
         OrderJpaEntity entity = mapper.toOrderJpa(order);
-
-        // Wire bidirectional items manually — MapStruct doesn't handle
-        // bidirectional relationships. Must be done before save so
-        // JPA cascade can persist children.
         entity.getItems().clear();
         for (var item : order.getItems()) {
             OrderItemJpaEntity itemEntity = mapper.toOrderItemJpa(item);
             entity.addItem(itemEntity);
         }
-
         if (entity.getId() != null) {
             Optional<OrderJpaEntity> existing = orderJpaRepository.findById(entity.getId());
             existing.ifPresent(e -> entity.setId(e.getId()));
         }
-
         OrderJpaEntity saved = orderJpaRepository.save(entity);
-
-        // Map back items from saved entity (which has DB-generated fields)
         Order result = mapper.toOrder(saved);
         result.getItems().clear();
         for (OrderItemJpaEntity savedItem : saved.getItems()) {
@@ -65,7 +58,6 @@ public class OrderRepositoryImpl implements OrderRepository {
                 .filter(e -> e.getDeletedAt() == null)
                 .map(entity -> {
                     Order order = mapper.toOrder(entity);
-                    // Wire items: mapper doesn't handle bidirectional parent ref
                     order.getItems().clear();
                     entity.getItems().forEach(i -> order.addItem(mapper.toOrderItem(i)));
                     return order;
@@ -79,7 +71,6 @@ public class OrderRepositoryImpl implements OrderRepository {
                 .filter(e -> e.getDeletedAt() == null)
                 .map(entity -> {
                     Order order = mapper.toOrder(entity);
-                    // Wire items: mapper doesn't handle bidirectional parent ref
                     order.getItems().clear();
                     entity.getItems().forEach(i -> order.addItem(mapper.toOrderItem(i)));
                     return order;
@@ -142,5 +133,70 @@ public class OrderRepositoryImpl implements OrderRepository {
     public Page<Order> findBySellerIdAndStatus(UUID sellerId, String status, Pageable pageable) {
         return orderJpaRepository.findBySellerIdAndStatus(sellerId, status, pageable)
                 .map(mapper::toOrder);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Order> findByStatus(String status, Pageable pageable) {
+        return orderJpaRepository.findByStatusAndDeletedAtIsNull(status, pageable).map(mapper::toOrder);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Order> findAll(Pageable pageable) {
+        return orderJpaRepository.findAllByDeletedAtIsNull(pageable).map(mapper::toOrder);
+    }
+
+    @Override
+    public void deleteById(UUID orderId) {
+        orderJpaRepository.findById(orderId).ifPresent(entity -> {
+            entity.setDeletedAt(Instant.now());
+            orderJpaRepository.save(entity);
+        });
+    }
+
+    @Override
+    public long countByStatus(String status) {
+        return orderJpaRepository.countByStatusAndDeletedAtIsNull(status);
+    }
+
+    @Override
+    public long countPaidOrdersAfter(Instant after) {
+        return orderJpaRepository.countPaidOrdersAfter(after);
+    }
+
+    @Override
+    public BigDecimal sumTotalAmountAfter(Instant after) {
+        return orderJpaRepository.sumTotalAmountAfter(after);
+    }
+
+    @Override
+    public BigDecimal sumTotalAmountBetween(Instant start, Instant end) {
+        return orderJpaRepository.sumTotalAmountBetween(start, end);
+    }
+
+    @Override
+    public boolean hasPurchasedProduct(UUID buyerId, UUID productId) {
+        return orderJpaRepository.hasPurchasedProduct(buyerId, productId);
+    }
+
+    @Override
+    public long countBySeller(UUID sellerId) {
+        return orderJpaRepository.countBySellerIdAndDeletedAtIsNull(sellerId);
+    }
+
+    @Override
+    public long countBySellerAndStatus(UUID sellerId, OrderStatus status) {
+        return orderJpaRepository.countBySellerIdAndStatusAndDeletedAtIsNull(sellerId, status.name());
+    }
+
+    @Override
+    public long countBySellerAndCreatedAtAfter(UUID sellerId, Instant after) {
+        return orderJpaRepository.countBySellerIdAndCreatedAtAfter(sellerId, after);
+    }
+
+    @Override
+    public BigDecimal sumTotalAmountBySellerAfter(UUID sellerId, Instant after) {
+        return orderJpaRepository.sumTotalAmountBySellerAfter(sellerId, after);
     }
 }

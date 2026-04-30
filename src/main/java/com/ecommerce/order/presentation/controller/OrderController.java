@@ -1,18 +1,13 @@
 package com.ecommerce.order.presentation.controller;
 
-import com.ecommerce.order.application.command.AddToCartCommand;
 import com.ecommerce.order.application.command.CancelOrderCommand;
 import com.ecommerce.order.application.command.CreateOrderCommand;
-import com.ecommerce.order.application.command.UpdateCartItemCommand;
 import com.ecommerce.order.application.command.UpdateOrderStatusCommand;
-import com.ecommerce.order.application.dto.CartResponse;
 import com.ecommerce.order.application.dto.OrderResponse;
 import com.ecommerce.order.application.dto.OrderSummaryResponse;
 import com.ecommerce.order.application.usecase.*;
-import com.ecommerce.order.presentation.dto.request.AddToCartRequest;
 import com.ecommerce.order.presentation.dto.request.CancelOrderRequest;
 import com.ecommerce.order.presentation.dto.request.CreateOrderRequest;
-import com.ecommerce.order.presentation.dto.request.UpdateCartItemRequest;
 import com.ecommerce.order.presentation.dto.request.UpdateOrderStatusRequest;
 import com.ecommerce.shared.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,64 +36,7 @@ public class OrderController {
     private final ListOrdersUseCase listOrdersUseCase;
     private final CancelOrderUseCase cancelOrderUseCase;
     private final UpdateOrderStatusUseCase updateOrderStatusUseCase;
-    private final AddToCartUseCase addToCartUseCase;
-    private final GetCartUseCase getCartUseCase;
-    private final UpdateCartItemUseCase updateCartItemUseCase;
-    private final RemoveCartItemUseCase removeCartItemUseCase;
-
-    // CART
-
-    @Operation(summary = "Get current buyer's cart")
-    @GetMapping("/cart")
-    @PreAuthorize("hasAuthority('order:read')")
-    public ResponseEntity<ApiResponse<CartResponse>> getCart(
-            @AuthenticationPrincipal UUID buyerId) {
-        return ResponseEntity.ok(ApiResponse.ok(getCartUseCase.execute(buyerId)));
-    }
-
-    @Operation(summary = "Add item to cart")
-    @PostMapping("/cart/items")
-    @PreAuthorize("hasAuthority('order:create')")
-    public ResponseEntity<ApiResponse<CartResponse>> addToCart(
-            @Valid @RequestBody AddToCartRequest req,
-            @AuthenticationPrincipal UUID buyerId) {
-        return ResponseEntity.ok(ApiResponse.ok(
-                addToCartUseCase.execute(
-                        new AddToCartCommand(
-                                req.productId(),
-                                req.variantId(),
-                                req.quantity(),
-                                req.unitPrice()),
-                        buyerId)));
-    }
-
-    @Operation(summary = "Update cart item quantity")
-    @PutMapping("/cart/items")
-    @PreAuthorize("hasAuthority('order:create')")
-    public ResponseEntity<ApiResponse<CartResponse>> updateCartItem(
-            @Valid @RequestBody UpdateCartItemRequest req,
-            @AuthenticationPrincipal UUID buyerId) {
-        return ResponseEntity.ok(ApiResponse.ok(
-                updateCartItemUseCase.execute(
-                        new UpdateCartItemCommand(
-                                req.productId(),
-                                req.variantId(),
-                                req.quantity()),
-                        buyerId)));
-    }
-
-    @Operation(summary = "Remove item from cart")
-    @DeleteMapping("/cart/items")
-    @PreAuthorize("hasAuthority('order:create')")
-    public ResponseEntity<ApiResponse<Void>> removeCartItem(
-            @RequestParam UUID productId,
-            @RequestParam(required = false) UUID variantId,
-            @AuthenticationPrincipal UUID buyerId) {
-        removeCartItemUseCase.execute(productId, variantId, buyerId);
-        return ResponseEntity.noContent().build();
-    }
-
-    // ORDER — BUYER
+    private final DeleteOrderUseCase deleteOrderUseCase;
 
     @Operation(summary = "Create order from cart / direct checkout")
     @PostMapping
@@ -136,8 +74,7 @@ public class OrderController {
                 req.voucherCode());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                ApiResponse.ok(createOrderUseCase.execute(cmd, buyerId,
-                        cmd.sellerId(), ipAddress, userAgent)));
+                ApiResponse.ok(createOrderUseCase.execute(cmd, buyerId, ipAddress, userAgent)));
     }
 
     @Operation(summary = "Get order by ID (buyer/seller view)")
@@ -173,8 +110,6 @@ public class OrderController {
                         new CancelOrderCommand(orderId, req != null ? req.reason() : null),
                         buyerId, false)));
     }
-
-    // ORDER — SELLER / ADMIN
 
     @Operation(summary = "List orders for seller")
     @GetMapping("/seller")
@@ -215,7 +150,60 @@ public class OrderController {
                         sellerId, true)));
     }
 
-    // HELPERS
+    @Operation(summary = "List all orders (admin)")
+    @GetMapping("/admin")
+    @PreAuthorize("hasAuthority('order:manage')")
+    public ResponseEntity<ApiResponse<Iterable<OrderSummaryResponse>>> listAllOrders(
+            @RequestParam(required = false) String status,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                listOrdersUseCase.executeForAdmin(status, pageable)));
+    }
+
+    @Operation(summary = "Get order by ID (admin view)")
+    @GetMapping("/admin/{orderId}")
+    @PreAuthorize("hasAuthority('order:manage')")
+    public ResponseEntity<ApiResponse<OrderResponse>> getAdminOrder(
+            @PathVariable UUID orderId,
+            @AuthenticationPrincipal UUID adminId) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                getOrderUseCase.execute(orderId, adminId, null))); 
+    }
+
+    @Operation(summary = "Update order status (admin)")
+    @PatchMapping("/admin/{orderId}/status")
+    @PreAuthorize("hasAuthority('order:manage')")
+    public ResponseEntity<ApiResponse<OrderResponse>> updateAdminOrderStatus(
+            @PathVariable UUID orderId,
+            @Valid @RequestBody UpdateOrderStatusRequest req,
+            @AuthenticationPrincipal UUID adminId) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                updateOrderStatusUseCase.execute(
+                        new UpdateOrderStatusCommand(
+                                orderId, req.newStatus(), req.reason(), req.metadata()),
+                        adminId, "ADMIN")));
+    }
+
+    @Operation(summary = "Cancel order (admin)")
+    @PostMapping("/admin/{orderId}/cancel")
+    @PreAuthorize("hasAuthority('order:manage')")
+    public ResponseEntity<ApiResponse<OrderResponse>> adminCancelOrder(
+            @PathVariable UUID orderId,
+            @Valid @RequestBody(required = false) CancelOrderRequest req,
+            @AuthenticationPrincipal UUID adminId) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                cancelOrderUseCase.execute(
+                        new CancelOrderCommand(orderId, req != null ? req.reason() : null),
+                        adminId, true)));
+    }
+
+    @Operation(summary = "Delete order (admin)")
+    @DeleteMapping("/admin/{orderId}")
+    @PreAuthorize("hasAuthority('order:manage')")
+    public ResponseEntity<ApiResponse<Void>> deleteOrder(@PathVariable UUID orderId) {
+        deleteOrderUseCase.execute(orderId);
+        return ResponseEntity.ok(ApiResponse.ok(null, "Order deleted successfully"));
+    }
 
     private String resolveIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
@@ -225,3 +213,5 @@ public class OrderController {
         return request.getRemoteAddr();
     }
 }
+
+

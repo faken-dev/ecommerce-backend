@@ -24,6 +24,9 @@ public class OrderItemJpaEntity extends AuditableJpaEntity {
     @Column(name = "product_id", nullable = false)
     private UUID productId;
 
+    @Column(name = "category_id")
+    private UUID categoryId;
+
     @Column(name = "product_name", nullable = false, length = 300)
     private String productName;
 
@@ -40,7 +43,8 @@ public class OrderItemJpaEntity extends AuditableJpaEntity {
     private String variantTitle;
 
     @Column(nullable = false)
-    private int quantity;
+    @Builder.Default
+    private int quantity = 1;
 
     @Column(name = "unit_price", nullable = false, precision = 19, scale = 4)
     private BigDecimal unitPrice;
@@ -49,11 +53,14 @@ public class OrderItemJpaEntity extends AuditableJpaEntity {
     private BigDecimal totalPrice;
 
     @Column(name = "discount_amount", nullable = false, precision = 19, scale = 4)
-    private BigDecimal discountAmount;
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
 
     @Column(name = "refunded_quantity", nullable = false)
-    private int refundedQuantity;
+    @Builder.Default
+    private int refundedQuantity = 0;
 
     @Column(name = "refunded_amount", nullable = false, precision = 19, scale = 4)
-    private BigDecimal refundedAmount;
+    @Builder.Default
+    private BigDecimal refundedAmount = BigDecimal.ZERO;
 }

@@ -45,9 +45,10 @@ public class RegisterUseCase {
         Role buyerRole = roleRepository.findByName("BUYER")
                 .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR));
 
-        User user = User.create(email, hashedPassword, command.fullName())
-                .phoneNumber(command.phoneNumber() != null ? PhoneNumber.of(command.phoneNumber()) : null)
-                .build();
+        User user = User.create(email, hashedPassword, command.fullName());
+        if (command.phoneNumber() != null) {
+            user.setPhoneNumber(PhoneNumber.of(command.phoneNumber()));
+        }
         user.addRole(buyerRole);
 
         User saved = userRepository.save(user);

@@ -61,3 +61,5 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok(profile, "Avatar updated successfully"));
     }
 }
+
+

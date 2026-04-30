@@ -8,12 +8,13 @@ import com.ecommerce.auth.domain.valueobject.Email;
 import com.ecommerce.auth.domain.valueobject.OAuth2Provider;
 import com.ecommerce.shared.event.EventPublisher;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * OAuth2 login use case — bridges Spring Security OAuth2 with the existing JWT infrastructure.
+ * OAuth2 login use case - bridges Spring Security OAuth2 with the existing JWT infrastructure.
  *
  * Flow: OAuth2SuccessHandler (Spring Security) extracts the OAuth2User principal,
  * extracts email/name from the provider's userinfo, then delegates here.
@@ -23,8 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
-@Slf4j
+
 public class OAuth2LoginUseCase {
+    private static final Logger log = LoggerFactory.getLogger(OAuth2LoginUseCase.class);
 
     private final OAuth2UserRepository oauth2UserRepository;
     private final TokenService tokenService;
@@ -36,7 +38,7 @@ public class OAuth2LoginUseCase {
      * @param provider        identity provider (GOOGLE, APPLE, etc.)
      * @param providerUserId  provider's subject ID
      * @param email           user's email from provider userinfo
-     * @param fullName        display name from provider (may be null — defaults to email prefix)
+     * @param fullName        display name from provider (may be null defaults to email prefix)
      * @param avatarUrl       profile picture URL (may be null)
      * @param deviceInfo      raw device info string for audit
      * @param ipAddress       client IP for audit

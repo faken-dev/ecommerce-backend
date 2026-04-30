@@ -9,6 +9,7 @@ package com.ecommerce.auth.domain.valueobject;
 public enum OAuth2Provider {
     EMAIL,
     GOOGLE,
+    FACEBOOK,
     APPLE;
 
     /** Convenience: true for all OAuth providers (not standard email login). */

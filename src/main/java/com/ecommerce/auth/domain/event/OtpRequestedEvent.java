@@ -11,12 +11,13 @@ import java.util.UUID;
  * - OTP generation and storage
  * - Notification sending (email/SMS)
  *
- *  SECURITY: Event contains only metadata (userId, channel, purpose) — no raw OTP or token hashes.
- * Handlers must NOT log or expose sensitive info.
+ *  SECURITY: Event contains metadata and the raw OTP code for the notification handler.
+ * Handlers must NOT log the otpCode or expose it to public logs.
  */
 public record OtpRequestedEvent(
         UUID userId,
         String destination,
+        String otpCode,
         OtpToken.Channel channel,
         OtpToken.Purpose purpose,
         Instant occurredAt

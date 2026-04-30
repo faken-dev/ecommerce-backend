@@ -20,5 +20,7 @@ public record CreateProductCommand(
         String metaTitle,
         String metaDescription,
         BigDecimal weightKg,
-        String weightUnit
+        String weightUnit,
+        String threeDModelUrl,
+        List<ProductImageCommand> images
 ) {}

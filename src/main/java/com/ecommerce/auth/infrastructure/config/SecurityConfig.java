@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -17,6 +18,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import com.ecommerce.auth.infrastructure.security.oauth2.CustomOAuth2UserService;
+import com.ecommerce.auth.infrastructure.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import com.ecommerce.auth.infrastructure.security.oauth2.OAuth2AuthenticationFailureHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -28,6 +32,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @Value("${app.cors.allowed-origins:http://localhost:5173}")
     private String allowedOrigins;
@@ -38,7 +45,7 @@ public class SecurityConfig {
             "/api/v1/auth/**",
             // OAuth2
             "/login/oauth2/**",
-            // Catalog — public read endpoints
+            // Catalog - public read endpoints
             "/api/v1/categories/tree",
             "/api/v1/products/public",
             "/api/v1/products/public/search",
@@ -52,8 +59,14 @@ public class SecurityConfig {
             "/v3/api-docs.yaml",
             "/actuator/health",
             "/actuator/info",
-            // Order — public order status lookup (read-only)
-            "/api/v1/orders/public/**"
+            // Order - public order status lookup (read-only)
+            "/api/v1/orders/public/**",
+            // Payment Callbacks & Webhooks
+            "/api/v1/payments/vnpay-return",
+            "/api/v1/payments/zalopay-return",
+            "/api/v1/payments/webhook/**",
+            // WebSocket
+            "/ws/**"
     };
 
     @Bean
@@ -64,13 +77,20 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .anyRequest().authenticated()
                 )
                 // JWT filter run before UsernamePasswordAuthenticationFilter
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class)
+                // OAuth2 Login
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService))
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
+                )
                 // Custom 401 response
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint())

@@ -35,7 +35,7 @@ public class ResetPasswordUseCase {
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS));
 
         verifyOtpUseCase.execute(new VerifyOtpCommand(
-                command.email(), command.otpCode(), OtpToken.Purpose.PASSWORD_RESET));
+                command.email(), command.otpCode(), OtpToken.Purpose.PASSWORD_RESET), true);
 
         user.changePassword(HashedPassword.of(passwordEncoder.encode(command.newPassword())));
         userRepository.save(user);

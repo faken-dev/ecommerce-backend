@@ -69,13 +69,17 @@ public class OrderJpaEntity extends AuditableJpaEntity {
     private String trackingNumber;
 
     @Column(name = "cancel_window_sec", nullable = false)
-    private int cancelWindowSec;
+    @Builder.Default
+    private int cancelWindowSec = 1800;
 
     @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
     @Column(name = "user_agent", length = 500)
     private String userAgent;
+
+    @Column(name = "applied_voucher_code", length = 50)
+    private String appliedVoucherCode;
 
     @Column(name = "deleted_at")
     private Instant deletedAt;

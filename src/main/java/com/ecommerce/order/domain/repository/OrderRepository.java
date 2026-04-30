@@ -5,8 +5,10 @@ import com.ecommerce.order.domain.entity.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import java.math.BigDecimal;
 
 public interface OrderRepository {
 
@@ -30,4 +32,23 @@ public interface OrderRepository {
     Page<Order> findByBuyerIdAndStatus(UUID buyerId, String status, Pageable pageable);
 
     Page<Order> findBySellerIdAndStatus(UUID sellerId, String status, Pageable pageable);
+
+    Page<Order> findByStatus(String status, Pageable pageable);
+
+    Page<Order> findAll(Pageable pageable);
+
+    void deleteById(UUID orderId);
+
+    // Analytics Port Methods
+    long countByStatus(String status);
+    long countPaidOrdersAfter(Instant after);
+    BigDecimal sumTotalAmountAfter(Instant after);
+    BigDecimal sumTotalAmountBetween(Instant start, Instant end);
+    boolean hasPurchasedProduct(UUID buyerId, UUID productId);
+
+    // Seller Dashboard Port Methods
+    long countBySeller(UUID sellerId);
+    long countBySellerAndStatus(UUID sellerId, OrderStatus status);
+    long countBySellerAndCreatedAtAfter(UUID sellerId, Instant after);
+    BigDecimal sumTotalAmountBySellerAfter(UUID sellerId, Instant after);
 }

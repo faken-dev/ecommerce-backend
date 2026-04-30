@@ -2,9 +2,12 @@ package com.ecommerce.notification.infrastructure;
 
 import com.ecommerce.notification.application.port.NotificationMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -14,15 +17,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-@Slf4j
+
 @Repository
 @RequiredArgsConstructor
 public class NotificationDlqRepository {
+    private static final Logger log = LoggerFactory.getLogger(NotificationDlqRepository.class);
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
-    private static final String DLQ_KEY_PREFIX  = "notification:dlq:";
+    private static final String DLQ_KEY_PREFIX = "notification:dlq:";
     private static final String DLQ_SET_KEY     = "notification:dlq:ids";  // Sorted set of IDs by timestamp
     private static final Duration DLQ_TTL        = Duration.ofDays(7);
 
@@ -93,7 +97,7 @@ public class NotificationDlqRepository {
             String to,
             String subject,
             String templateName,
-            com.fasterxml.jackson.databind.JsonNode variables,
+            JsonNode variables,
             String reason,
             String failedAt,
             int retryCount

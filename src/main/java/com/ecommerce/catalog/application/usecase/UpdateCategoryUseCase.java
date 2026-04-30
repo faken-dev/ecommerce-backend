@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
 @Service
 @RequiredArgsConstructor
 public class UpdateCategoryUseCase {
@@ -33,6 +34,21 @@ public class UpdateCategoryUseCase {
         category.update(command.name(), command.description(), command.iconUrl(), command.sortOrder());
         Category saved = categoryRepository.save(category);
         eventPublisher.publish(saved.toUpdatedEvent());
-        return mapper.toCategoryResponse(saved);
+        
+        CategoryResponse response = mapper.toCategoryResponse(saved);
+        if (saved.getParentId() != null) {
+            String parentName = categoryRepository.findById(saved.getParentId())
+                    .map(Category::getName)
+                    .orElse(null);
+            return enrichWithParentName(response, parentName);
+        }
+        return response;
+    }
+
+    private CategoryResponse enrichWithParentName(CategoryResponse base, String parentName) {
+        return new CategoryResponse(
+            base.id(), base.slug(), base.name(), base.description(),
+            base.parentId(), parentName, base.iconUrl(), base.sortOrder(), base.active()
+        );
     }
 }

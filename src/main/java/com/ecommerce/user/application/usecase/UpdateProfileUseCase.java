@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Service
@@ -18,11 +19,11 @@ import java.util.UUID;
 public class UpdateProfileUseCase {
 
     private final UserProfileRepository userProfileRepository;
-    private final UserRepository userRepository;   // auth module — keeps fullName in sync
+    private final UserRepository userRepository;   // auth module - keeps fullName in sync
 
     @Transactional
     public ProfileResponse execute(UUID userId, UpdateProfileCommand command) {
-        if (command.dateOfBirth() != null && command.dateOfBirth().isAfter(java.time.LocalDate.now())) {
+        if (command.dateOfBirth() != null && command.dateOfBirth().isAfter(LocalDate.now())) {
             throw new BusinessException(ErrorCode.USER_INVALID_DATE_OF_BIRTH);
         }
 
@@ -40,8 +41,9 @@ public class UpdateProfileUseCase {
 
         UserProfile saved = userProfileRepository.save(profile);
 
-        // UserProfile.fullName is the authoritative source — propagate to auth_users
+        // Propagate changes to auth system
         userRepository.updateFullName(userId, saved.getFullName());
+        userRepository.updateAvatar(userId, saved.getProfilePictureUrl());
 
         return ProfileResponse.from(saved);
     }

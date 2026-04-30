@@ -8,6 +8,7 @@ public record CategoryResponse(
     String name,
     String description,
     UUID parentId,
+    String parentName,
     String iconUrl,
     int sortOrder,
     boolean active

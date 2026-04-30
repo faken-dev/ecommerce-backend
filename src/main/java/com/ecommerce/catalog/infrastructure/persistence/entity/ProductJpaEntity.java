@@ -41,12 +41,6 @@ public class ProductJpaEntity extends AuditableJpaEntity {
     @Column(name = "cost_per_item", precision = 19, scale = 4)
     private BigDecimal costPerItem;
 
-    @Column(name = "stock_quantity", nullable = false)
-    private int stockQuantity;
-
-    @Column(name = "low_stock_threshold", nullable = false)
-    private int lowStockThreshold;
-
     @Column(length = 100)
     private String sku;
 
@@ -63,7 +57,8 @@ public class ProductJpaEntity extends AuditableJpaEntity {
     private String status;
 
     @Column(name = "is_featured", nullable = false)
-    private boolean isFeatured;
+    @Builder.Default
+    private boolean isFeatured = false;
 
     @Column(nullable = false, length = 20)
     private String visibility;
@@ -78,13 +73,17 @@ public class ProductJpaEntity extends AuditableJpaEntity {
     private BigDecimal averageRating;
 
     @Column(name = "review_count", nullable = false)
-    private int reviewCount;
+    @Builder.Default
+    private int reviewCount = 0;
 
     @Column(name = "weight_kg", precision = 10, scale = 3)
     private BigDecimal weightKg;
 
     @Column(name = "weight_unit", length = 10)
     private String weightUnit;
+
+    @Column(name = "three_d_model_url", columnDefinition = "TEXT")
+    private String threeDModelUrl;
 
     @Column(name = "deleted_at")
     private Instant deletedAt;

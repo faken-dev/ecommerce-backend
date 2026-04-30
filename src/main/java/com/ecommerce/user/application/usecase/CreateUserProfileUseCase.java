@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -26,8 +27,8 @@ public class CreateUserProfileUseCase {
                 .id(UUID.randomUUID())
                 .userId(userId)
                 .fullName(fullName)
-                .createdAt(java.time.Instant.now())
-                .updatedAt(java.time.Instant.now())
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
                 .build();
 
         UserProfile saved = userProfileRepository.save(profile);

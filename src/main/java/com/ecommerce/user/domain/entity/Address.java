@@ -7,13 +7,18 @@ import com.ecommerce.user.domain.event.AddressMarkedAsDefaultEvent;
 import com.ecommerce.user.domain.event.AddressUpdatedEvent;
 import com.github.f4b6a3.uuid.UuidCreator;
 
-import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Getter
+@Setter
+@NoArgsConstructor
+@SuperBuilder
 public class Address extends AuditableEntity {
 
     private UUID userId;
@@ -25,7 +30,6 @@ public class Address extends AuditableEntity {
     private String province;
     private boolean defaultAddress;
 
-    // Factory Method
     public static Address create(UUID userId, String recipientName, String recipientPhone,
                                  String addressLine, String ward, String district,
                                  String province, boolean defaultAddress) {
@@ -45,23 +49,6 @@ public class Address extends AuditableEntity {
                 .build();
     }
 
-    @Builder
-    public Address(UUID id, UUID userId, String recipientName, String recipientPhone,
-                   String addressLine, String ward, String district, String province,
-                   boolean defaultAddress, Instant createdAt, Instant updatedAt,
-                   UUID createdBy, UUID updatedBy) {
-        super(id, createdAt, updatedAt, createdBy, updatedBy);
-        this.userId = userId;
-        this.recipientName = recipientName;
-        this.recipientPhone = recipientPhone;
-        this.addressLine = addressLine;
-        this.ward = ward;
-        this.district = district;
-        this.province = province;
-        this.defaultAddress = defaultAddress;
-    }
-
-    // Business Methods
     public void update(String recipientName, String recipientPhone, String addressLine,
                        String ward, String district, String province) {
         this.recipientName = recipientName;
@@ -70,26 +57,24 @@ public class Address extends AuditableEntity {
         this.district = district;
         this.ward = ward;
         this.province = province;
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
 
     public void markAsDefault() {
         if (this.defaultAddress) return;
         this.defaultAddress = true;
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
 
     public void unmarkAsDefault() {
         if (!this.defaultAddress) return;
         this.defaultAddress = false;
-        this.setUpdateAt(Instant.now());
+        this.touchUpdate();
     }
 
     public String getFullAddress() {
         return String.format("%s, %s, %s, %s", addressLine, ward, district, province);
     }
-
-    // ─── Domain Event Factories ────────────────────────────────────────────────
 
     public AddressCreatedEvent toCreatedEvent() {
         return new AddressCreatedEvent(getId(), userId, getFullAddress(), defaultAddress, Instant.now());
