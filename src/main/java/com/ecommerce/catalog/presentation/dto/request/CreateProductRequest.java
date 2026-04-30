@@ -35,5 +35,7 @@ public record CreateProductRequest(
         String metaTitle,
         String metaDescription,
         BigDecimal weightKg,
-        String weightUnit
+        String weightUnit,
+        String threeDModelUrl,
+        List<ProductImageRequest> images
 ) {}
