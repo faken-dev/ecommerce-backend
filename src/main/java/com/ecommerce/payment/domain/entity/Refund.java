@@ -36,6 +36,7 @@ public class Refund extends AuditableEntity {
     private Instant completedAt;
     private Instant failedAt;
     private Instant deletedAt;
+    private Long version;
 
     public static Refund create(
             UUID id,
