@@ -64,6 +64,7 @@ public class AdminBootstrapRunner implements CommandLineRunner {
             return;
         }
 
+
         Email email;
         try {
             email = new Email(adminEmail);
@@ -79,23 +80,28 @@ public class AdminBootstrapRunner implements CommandLineRunner {
 
         Role adminRole = roleRepository.findByName("ADMIN").orElse(null);
         if (adminRole == null) {
-            log.error("Admin bootstrap: ADMIN role not found. " +
-                    "Ensure Flyway migration V1 has run. Cannot create admin account.");
+            log.error("Admin bootstrap FAILURE: ADMIN role not found in database. " +
+                    "Ensure Flyway migration V1 has run successfully. Cannot create admin account.");
             return;
         }
 
-        // Create auth user
-        User admin = User.create(email, HashedPassword.of(passwordEncoder.encode(adminPassword)), "Administrator");
-        admin.setEmailVerified(true);
-        admin.setActive(true);
-        admin.addRole(adminRole);
-        User saved = userRepository.save(admin);
+        try {
+            // Create auth user
+            User admin = User.create(email, HashedPassword.of(passwordEncoder.encode(adminPassword)), "Administrator");
+            admin.setEmailVerified(true);
+            admin.setActive(true);
+            admin.addRole(adminRole);
+            User saved = userRepository.save(admin);
 
-        // Create user profile for the admin
-        UserProfile profile = UserProfile.createFromRegistration(saved.getId(), "Administrator");
-        userProfileRepository.save(profile);
+            // Create user profile for the admin
+            UserProfile profile = UserProfile.createFromRegistration(saved.getId(), "Administrator");
+            userProfileRepository.save(profile);
 
-        log.info(" Default admin account + profile created: {}", adminEmail);
-        log.warn("  Change this password immediately in production!");
+            log.info("CRITICAL SECURITY EVENT: Default admin account + profile created for email: {}", adminEmail);
+            log.warn("ACTION REQUIRED: Set ADMIN_BOOTSTRAP_ENABLED=false in your environment variables " +
+                    "and rotate this password immediately through the admin dashboard!");
+        } catch (Exception e) {
+            log.error("Admin bootstrap FAILURE: Unexpected error during admin creation: {}", e.getMessage(), e);
+        }
     }
 }
