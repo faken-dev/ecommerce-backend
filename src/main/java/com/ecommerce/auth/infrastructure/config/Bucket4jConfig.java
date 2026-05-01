@@ -22,13 +22,14 @@ public class Bucket4jConfig {
 
     @Bean(destroyMethod = "shutdown")
     public RedisClient bucket4jRedisClient(
-            @Value("${spring.data.redis.host}") String host,
-            @Value("${spring.data.redis.port}") int port,
-            @Value("${spring.data.redis.password:}") String password) {
+        @Value("${REDIS_HOST:localhost}") String host,
+        @Value("${REDIS_PORT:6379}") int port,
+        @Value("${REDIS_PASSWORD:}") String password) {
 
         RedisURI.Builder builder = RedisURI.builder()
                 .withHost(host)
-                .withPort(port);
+                .withPort(port)
+                .withSsl(!host.equals("localhost"));
 
         if (password != null && !password.isBlank()) {
             builder.withPassword(password.toCharArray());
