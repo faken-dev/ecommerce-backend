@@ -1,7 +1,7 @@
 -- V6__user_create_addresses.sql
 -- User shipping addresses with default-address support
 
-CREATE TABLE addresses (
+CREATE TABLE user_addresses (
     id              UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         UUID         NOT NULL,
     recipient_name  VARCHAR(255) NOT NULL,
@@ -19,6 +19,6 @@ CREATE TABLE addresses (
     updated_by      UUID
 );
 
-CREATE INDEX idx_addresses_user_id      ON addresses(user_id);
-CREATE INDEX idx_addresses_user_default ON addresses(user_id, default_address)
+CREATE INDEX idx_user_addresses_user_id      ON user_addresses(user_id);
+CREATE INDEX idx_user_addresses_user_default ON user_addresses(user_id, default_address)
     WHERE default_address = true;

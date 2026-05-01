@@ -56,15 +56,15 @@ spring:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
+            client-id: ${GOOGLE_CLIENT_ID:}
+            client-secret: ${GOOGLE_CLIENT_SECRET:}
             scope: 
               - profile
               - email
             redirect-uri: ${GOOGLE_REDIRECT_URI:{baseUrl}/login/oauth2/code/google}
           facebook:
-            client-id: ${FACEBOOK_CLIENT_ID}
-            client-secret: ${FACEBOOK_CLIENT_SECRET}
+            client-id: ${FACEBOOK_CLIENT_ID:}
+            client-secret: ${FACEBOOK_CLIENT_SECRET:}
             scope: public_profile
             redirect-uri: ${FACEBOOK_REDIRECT_URI:{baseUrl}/login/oauth2/code/facebook}
         provider:
@@ -76,7 +76,7 @@ spring:
 app:
   # JWT
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:}
     access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}    # 15 phút
     refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} # 7 ngày
 
@@ -85,7 +85,7 @@ app:
     expiry-minutes: ${OTP_EXPIRY_MINUTES:5}
     length: ${OTP_LENGTH:6}
     max-attempts: ${OTP_MAX_ATTEMPTS:3}
-    hmac-secret: ${OTP_HMAC_SECRET}   # REQUIRED — no default. Must be set via environment variable.
+    hmac-secret: ${OTP_HMAC_SECRET:}   # REQUIRED — no default. Must be set via environment variable.
 
   # Rate limiting
   rate-limit:
@@ -101,31 +101,31 @@ app:
 
   # Allow configuring CORS allowed origins via environment variable (comma-separated)
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
 
   ai:
     gemini:
-      api-key: ${GEMINI_API_KEY}
-      model: ${GEMINI_MODEL}
+      api-key: ${GEMINI_API_KEY:}
+      model: ${GEMINI_MODEL:gemini-1.5-flash}
 
 # Notification Services
 notification:
   sendgrid:
-    api-key: ${SENDGRID_API_KEY}
-    from-email: ${SENDGRID_FROM_EMAIL}
-    from-name: ${SENDGRID_FROM_NAME}
+    api-key: ${SENDGRID_API_KEY:}
+    from-email: ${SENDGRID_FROM_EMAIL:no-reply@faken.com}
+    from-name: ${SENDGRID_FROM_NAME:ECommerce}
   twilio:
-    account-sid: ${TWILIO_ACCOUNT_SID}
-    auth-token: ${TWILIO_AUTH_TOKEN}
-    from-phone: ${TWILIO_FROM_PHONE}
-    whatsapp-from: ${TWILIO_WHATSAPP_FROM}
+    account-sid: ${TWILIO_ACCOUNT_SID:}
+    auth-token: ${TWILIO_AUTH_TOKEN:}
+    from-phone: ${TWILIO_FROM_PHONE:}
+    whatsapp-from: ${TWILIO_WHATSAPP_FROM:}
   storage:
     r2:
-      access-key: ${R2_ACCESS_KEY_ID}
-      secret-key: ${R2_SECRET_ACCESS_KEY}
-      account-id: ${R2_ACCOUNT_ID}
+      access-key: ${R2_ACCESS_KEY_ID:}
+      secret-key: ${R2_SECRET_ACCESS_KEY:}
+      account-id: ${R2_ACCOUNT_ID:}
       bucket-name: ${R2_BUCKET_NAME:ecommerce-bucket}
-      public-url: ${R2_PUBLIC_URL}
+      public-url: ${R2_PUBLIC_URL:}
 
 # OpenAPI (Swagger)
 springdoc:
@@ -151,26 +151,26 @@ management:
 
 # Payment Gateways
 payment:
-  baseUrl: ${APP_BASE_URL}
-  frontendUrl: ${PAYMENT_FRONTEND_URL}
+  baseUrl: ${APP_BASE_URL:http://localhost:8080}
+  frontendUrl: ${PAYMENT_FRONTEND_URL:http://localhost:5173}
   vnpay:
-    tmnCode: ${PAYMENT_VNPAY_TMN_CODE}
-    hashSecret: ${PAYMENT_VNPAY_HASH_SECRET}
+    tmnCode: ${PAYMENT_VNPAY_TMN_CODE:}
+    hashSecret: ${PAYMENT_VNPAY_HASH_SECRET:}
   momo:
-    partnerCode: ${PAYMENT_MOMO_PARTNER_CODE}
-    accessKey: ${PAYMENT_MOMO_ACCESS_KEY}
-    secretKey: ${PAYMENT_MOMO_SECRET_KEY}
+    partnerCode: ${PAYMENT_MOMO_PARTNER_CODE:}
+    accessKey: ${PAYMENT_MOMO_ACCESS_KEY:}
+    secretKey: ${PAYMENT_MOMO_SECRET_KEY:}
   paypal:
-    clientId: ${PAYMENT_PAYPAL_CLIENT_ID}
-    clientSecret: ${PAYMENT_PAYPAL_CLIENT_SECRET}
+    clientId: ${PAYMENT_PAYPAL_CLIENT_ID:}
+    clientSecret: ${PAYMENT_PAYPAL_CLIENT_SECRET:}
   stripe:
-    secretKey: ${PAYMENT_STRIPE_SECRET_KEY}
-    publishableKey: ${PAYMENT_STRIPE_PUBLISHABLE_KEY}
-    webhookSecret: ${PAYMENT_STRIPE_WEBHOOK_SECRET}
+    secretKey: ${PAYMENT_STRIPE_SECRET_KEY:}
+    publishableKey: ${PAYMENT_STRIPE_PUBLISHABLE_KEY:}
+    webhookSecret: ${PAYMENT_STRIPE_WEBHOOK_SECRET:}
   zalopay:
-    appId: ${PAYMENT_ZALOPAY_APP_ID}
-    key1: ${PAYMENT_ZALOPAY_KEY1}
-    key2: ${PAYMENT_ZALOPAY_KEY2}
+    appId: ${PAYMENT_ZALOPAY_APP_ID:}
+    key1: ${PAYMENT_ZALOPAY_KEY1:}
+    key2: ${PAYMENT_ZALOPAY_KEY2:}
   reconciliation:
     intervalMs: 300000 # 5 minutes for dev
     thresholdMinutes: 15
