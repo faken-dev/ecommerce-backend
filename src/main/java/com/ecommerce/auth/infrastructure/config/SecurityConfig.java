@@ -36,7 +36,7 @@ public class SecurityConfig {
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
-    @Value("${app.cors.allowed-origins:http://localhost:5173}")
+    @Value("${APP_CORS_ALLOWED_ORIGINS:}")
     private String allowedOrigins;
 
     // Public endpoints that don't require authentication
@@ -51,6 +51,7 @@ public class SecurityConfig {
             "/api/v1/products/public/search",
             "/api/v1/products/public/category/**",
             "/api/v1/products/public/**",
+            "/api/v1/public/**",
             // Docs & Health
             "/swagger-ui.html",
             "/swagger-ui/**",
