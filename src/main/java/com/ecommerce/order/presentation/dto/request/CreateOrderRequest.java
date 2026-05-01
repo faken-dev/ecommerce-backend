@@ -41,7 +41,9 @@ public record CreateOrderRequest(
 
         String buyerNote,
 
-        String voucherCode
+        String voucherCode,
+
+        String paymentMethod
 ) {
     /**
      * Nested order item in the presentation request.

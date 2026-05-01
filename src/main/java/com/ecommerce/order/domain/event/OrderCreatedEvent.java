@@ -15,6 +15,7 @@ public record OrderCreatedEvent(
         String voucherCode,
         List<OrderItemData> items,
         Set<UUID> categoryIds,
+        String paymentMethod,
         Instant occurredAt
 ) {
     public record OrderItemData(

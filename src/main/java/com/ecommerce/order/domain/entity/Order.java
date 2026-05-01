@@ -218,6 +218,7 @@ public class Order extends AuditableEntity {
                 appliedVoucherCode,
                 itemData,
                 categoryIds,
+                paymentMethod,
                 Instant.now()
         );
     }
@@ -242,7 +243,7 @@ public class Order extends AuditableEntity {
                 ))
                 .toList();
         return new OrderConfirmedEvent(
-                getId(), buyerId, itemData, Instant.now());
+                getId(), buyerId, sellerId, itemData, Instant.now());
     }
 
     public OrderStatusChangedEvent toStatusChangedEvent(OrderStatus from, OrderStatus to) {

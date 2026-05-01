@@ -11,6 +11,7 @@ import java.util.UUID;
 public record OrderConfirmedEvent(
         UUID orderId,
         UUID buyerId,
+        UUID sellerId,
         List<OrderItemData> items,
         Instant occurredAt
 ) {

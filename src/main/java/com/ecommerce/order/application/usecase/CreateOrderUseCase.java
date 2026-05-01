@@ -113,6 +113,10 @@ public class CreateOrderUseCase {
             order.setAppliedVoucherCode(cmd.voucherCode());
         }
 
+        if (cmd.paymentMethod() != null) {
+            order.setPaymentMethod(cmd.paymentMethod());
+        }
+
         Order saved = orderRepository.save(order);
 
         // 4. Cleanup & Events

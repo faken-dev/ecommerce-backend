@@ -14,7 +14,8 @@ public record CreateOrderCommand(
         BigDecimal discountAmount,
         String currency,
         String buyerNote,
-        String voucherCode
+        String voucherCode,
+        String paymentMethod
 ) {
     public record OrderItemCommand(
             UUID productId,

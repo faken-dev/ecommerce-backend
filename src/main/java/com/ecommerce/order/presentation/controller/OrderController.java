@@ -71,7 +71,8 @@ public class OrderController {
                 req.discountAmount(),
                 req.currency(),
                 req.buyerNote(),
-                req.voucherCode());
+                req.voucherCode(),
+                req.paymentMethod());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 ApiResponse.ok(createOrderUseCase.execute(cmd, buyerId, ipAddress, userAgent)));
