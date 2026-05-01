@@ -12,6 +12,7 @@ import com.ecommerce.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,9 @@ public class RefreshTokenUseCase {
     private final UserRepository userRepository;
     private final TokenService tokenService;
     private final TokenFamilyTracking tokenFamilyTracking;
+
+    @Value("${app.auth.refresh-token-grace-period-seconds:15}")
+    private long gracePeriodSeconds;
 
     /**
      * Refresh token rotation with replay-attack detection.
@@ -40,8 +44,9 @@ public class RefreshTokenUseCase {
                 tokenService.hashForLookup(command.refreshToken()))
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_NOT_FOUND));
 
-        // Check expiry/revocation FIRST expired tokens must not be rotated
-        oldToken.ensureValid();
+        // Check expiry/revocation FIRST expired tokens must not be rotated.
+        // We allow a small grace period for revoked tokens to handle concurrent refresh requests.
+        oldToken.ensureValid(gracePeriodSeconds);
 
         // Replay attack detection: if token.generation < current family generation → attack
         if (!tokenFamilyTracking.isGenerationValid(oldToken.getUserId(), oldToken.getGeneration())) {

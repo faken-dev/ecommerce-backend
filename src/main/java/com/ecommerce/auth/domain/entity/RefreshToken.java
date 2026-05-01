@@ -62,10 +62,19 @@ public class RefreshToken extends AuditableEntity {
     public boolean isRevoked() { return revokedAt != null; }
     public boolean isValid()   { return !isRevoked() && !isExpired(); }
 
-    /** Throws if revoked or expired. */
-    public void ensureValid() {
-        if (isRevoked()) throw new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_REVOKED);
+    /** Throws if revoked (and outside grace period) or expired. */
+    public void ensureValid(long gracePeriodSeconds) {
+        if (isRevoked()) {
+            Instant graceThreshold = revokedAt.plusSeconds(gracePeriodSeconds);
+            if (Instant.now().isAfter(graceThreshold)) {
+                throw new BusinessException(ErrorCode.AUTH_REFRESH_TOKEN_REVOKED);
+            }
+        }
         if (isExpired()) throw new BusinessException(ErrorCode.AUTH_TOKEN_EXPIRED);
+    }
+
+    public void ensureValid() {
+        ensureValid(0);
     }
 
     /** Revokes this token. */
