@@ -1,5 +1,8 @@
 package com.ecommerce.voucher.domain.enums;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import lombok.Getter;
+
 /**
  * Defines the scope of a voucher, indicating where and how it can be applied.
  * - GLOBAL: Can be applied to any order.
@@ -8,7 +11,9 @@ package com.ecommerce.voucher.domain.enums;
  * - NEW_USERS_ONLY: Can only be used by new users.
  * - EXISTING_USERS_ONLY: Can only be used by existing users.
  */
+@Getter
 public enum VoucherScope {
+    @JsonAlias({"ALL", "global"})
     GLOBAL,
     SPECIFIC_PRODUCTS,
     SPECIFIC_CATEGORIES,

@@ -67,7 +67,7 @@ public class CreateVoucherUseCase {
                 .sellerId(cmd.sellerId())
                 .applicableProductIds(productIds)
                 .applicableCategoryIds(categoryIds)
-                .requiresCollection(cmd.requiresCollection())
+                .requiresCollection(cmd.requiresCollection() != null ? cmd.requiresCollection() : false)
                 .createdAt(now)
                 .updatedAt(now)
                 .createdBy(createdBy)

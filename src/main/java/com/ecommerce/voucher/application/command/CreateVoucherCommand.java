@@ -24,5 +24,5 @@ public record CreateVoucherCommand(
         Set<UUID> applicableProductIds,
         Set<UUID> applicableCategoryIds,
         UUID sellerId,
-        boolean requiresCollection
+        Boolean requiresCollection
 ) {}
