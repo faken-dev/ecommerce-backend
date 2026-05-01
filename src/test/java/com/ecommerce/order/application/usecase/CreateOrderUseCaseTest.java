@@ -67,7 +67,8 @@ class CreateOrderUseCaseTest {
                 BigDecimal.ZERO,
                 "VND",
                 "Please deliver fast",
-                null
+                null,
+                "COD"
         );
     }
 
@@ -150,7 +151,7 @@ class CreateOrderUseCaseTest {
             CreateOrderCommand cmd = new CreateOrderCommand(
                     Fixtures.SELLER_ID, Fixtures.SHIPPING_ADDRESS_ID,
                     List.of(new OrderItemCommand(Fixtures.PRODUCT_ID, Fixtures.VARIANT_ID, 1, new BigDecimal("100000"), "P1", "S1", null, null)),
-                    new BigDecimal("100000"), new BigDecimal("10000"), new BigDecimal("10000"), BigDecimal.ZERO, "VND", null, voucherCode);
+                    new BigDecimal("100000"), new BigDecimal("10000"), new BigDecimal("10000"), BigDecimal.ZERO, "VND", null, voucherCode, "COD");
 
             Product product = Fixtures.aProduct();
             
