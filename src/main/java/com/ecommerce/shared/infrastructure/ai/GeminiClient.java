@@ -89,7 +89,7 @@ public class GeminiClient {
                         .build();
             }
 
-            HttpEntity<GeminiRequest> entity = new HttpEntity<>(finalRequest, (MultiValueMap<String, String>) headers);
+            HttpEntity<GeminiRequest> entity = new HttpEntity<>(finalRequest, headers);
             String url = String.format(
                     "https://generativelanguage.googleapis.com/%s/models/%s:generateContent?key=%s",
                     apiVersion,
