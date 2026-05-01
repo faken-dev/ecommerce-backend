@@ -7,7 +7,7 @@ public record CreateUserCommand(
     String password,
     String fullName,
     String phoneNumber,
-    boolean active,
-    boolean emailVerified,
+    Boolean active,
+    Boolean emailVerified,
     Set<String> roles
 ) {}

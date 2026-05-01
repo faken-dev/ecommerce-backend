@@ -29,7 +29,11 @@ public class UpdateUserUseCase {
 
         // Use domain methods for business rules/updates
         user.updateBasicInfo(cmd.fullName(), cmd.phoneNumber(), cmd.profilePictureUrl());
-        user.updateStatus(cmd.active(), cmd.emailVerified());
+        // If null is sent, keep current value
+        boolean finalActive = cmd.active() != null ? cmd.active() : user.isActive();
+        boolean finalEmailVerified = cmd.emailVerified() != null ? cmd.emailVerified() : user.isEmailVerified();
+        
+        user.updateStatus(finalActive, finalEmailVerified);
         
         if (cmd.roles() != null) {
             user.updateRoles(cmd.roles());

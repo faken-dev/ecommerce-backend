@@ -1,8 +1,18 @@
+# Production Overrides
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS} # Must be set in production
+
 spring:
   jpa:
     properties:
       hibernate:
         "[format_sql]": false
+
+  data:
+    redis:
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:true} # Default to true for production if using managed Redis
 
 springdoc:
   swagger-ui:

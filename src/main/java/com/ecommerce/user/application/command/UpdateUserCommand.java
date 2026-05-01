@@ -6,7 +6,7 @@ public record UpdateUserCommand(
     String fullName,
     String phoneNumber,
     String profilePictureUrl,
-    boolean active,
-    boolean emailVerified,
+    Boolean active,
+    Boolean emailVerified,
     Set<String> roles
 ) {}

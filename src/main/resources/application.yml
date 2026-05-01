@@ -1,5 +1,6 @@
 server:
   port: ${PORT:8080}
+  forward-headers-strategy: framework
 
 spring:
   application:
@@ -32,7 +33,7 @@ spring:
       password: ${REDIS_PASSWORD:}
       timeout: 2000ms
       ssl:
-        enabled: true 
+        enabled: ${REDIS_SSL_ENABLED:false}
       repositories:
         enabled: false
       lettuce:
@@ -87,6 +88,9 @@ app:
     secret: ${JWT_SECRET:}
     access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}    # 15 phút
     refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} # 7 ngày
+
+  auth:
+    refresh-token-grace-period-seconds: ${AUTH_REFRESH_TOKEN_GRACE_PERIOD:15}
 
   # OTP
   otp:

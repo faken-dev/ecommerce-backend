@@ -31,5 +31,5 @@ public record CreateAddressRequest(
         @Size(max = 255, message = "Province must not exceed 255 characters")
         String province,
 
-        boolean isDefault
+        Boolean isDefault
 ) {}

@@ -40,8 +40,8 @@ public class CreateUserUseCase {
         user.setFullName(cmd.fullName());
         String phone = cmd.phoneNumber();
         user.setPhoneNumber(phone != null && !phone.isBlank() ? phone : null);
-        user.setActive(cmd.active());
-        user.setEmailVerified(cmd.emailVerified());
+        user.setActive(cmd.active() != null ? cmd.active() : true);
+        user.setEmailVerified(cmd.emailVerified() != null ? cmd.emailVerified() : false);
 
         if (cmd.roles() != null && !cmd.roles().isEmpty()) {
             Set<UserRoleJpaEntity> roles = cmd.roles().stream()

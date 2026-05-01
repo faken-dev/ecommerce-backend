@@ -53,7 +53,7 @@ public class AddressController {
                         req.ward(),
                         req.district(),
                         req.province(),
-                        req.isDefault()));
+                        Boolean.TRUE.equals(req.isDefault())));
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(address, "Address created successfully"));
