@@ -27,27 +27,29 @@
             <charset>utf8</charset>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- daily rollover -->
             <fileNamePattern>logs/ecommerce-backend.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <!-- keep 30 days' worth of history -->
             <maxHistory>30</maxHistory>
         </rollingPolicy>
     </appender>
 
-    <!-- Logger for our application -->
+    <!-- Logger levels -->
     <logger name="com.ecommerce" level="INFO" />
-    
-    <!-- Mute Hikari connection pool noise -->
     <logger name="com.zaxxer.hikari" level="WARN" />
-
-    <!-- Mute Hibernate SQL spam -->
     <logger name="org.hibernate.SQL" level="WARN" />
-    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="WARN" />
 
-    <!-- Root Logger -->
-    <root level="INFO">
-        <appender-ref ref="CONSOLE" />
-        <appender-ref ref="FILE" />
-    </root>
+    <!--  LOCAL CONFIGURATION -->
+    <springProfile name="dev | local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE" />
+            <appender-ref ref="FILE" />
+        </root>
+    </springProfile>
+
+    <!-- PRODUCTION CONFIGURATION (RENDER, VERCEL, ...) -->
+    <springProfile name="!dev &amp; !local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE" />
+        </root>
+    </springProfile>
 
 </configuration>
