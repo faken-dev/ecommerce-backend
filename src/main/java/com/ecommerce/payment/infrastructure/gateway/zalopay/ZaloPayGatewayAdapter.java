@@ -77,7 +77,9 @@ public class ZaloPayGatewayAdapter implements PaymentGatewayPort {
         String appIdStr = config.getAppId();
         // ZaloPay format: yyMMdd_xxxx. We use the full paymentId (32 hex chars) as xxxx
         // total length: 6 (date) + 1 (_) + 32 (uuid) = 39 characters (max 40)
-        String datePrefix = new SimpleDateFormat("yyMMdd").format(new Date());
+        SimpleDateFormat formatter = new SimpleDateFormat("yyMMdd");
+        formatter.setTimeZone(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+        String datePrefix = formatter.format(new Date());
         String orderIdZalo = datePrefix + "_" + paymentId.toString().replace("-", "");
         
         long amountInLong = amount.longValue();
@@ -85,7 +87,9 @@ public class ZaloPayGatewayAdapter implements PaymentGatewayPort {
         String description = "Thanh toan don hang #" + orderId;
         
         Map<String, String> embedDataMap = new HashMap<>();
-        embedDataMap.put("redirecturl", returnUrl != null ? returnUrl : properties.getBaseUrl() + "/api/v1/payments/zalopay-return");
+        String finalReturnUrl = returnUrl != null ? returnUrl : properties.getBaseUrl() + "/api/v1/payments/zalopay-return";
+        log.info("[ZaloPay] Using redirect URL: {}", finalReturnUrl);
+        embedDataMap.put("redirecturl", finalReturnUrl);
         
         String embedData;
         String item = "[]";
