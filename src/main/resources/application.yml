@@ -92,6 +92,9 @@ app:
   auth:
     refresh-token-grace-period-seconds: ${AUTH_REFRESH_TOKEN_GRACE_PERIOD:15}
 
+  oauth2:
+    redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:5173/login}
+
   # OTP
   otp:
     expiry-minutes: ${OTP_EXPIRY_MINUTES:5}
