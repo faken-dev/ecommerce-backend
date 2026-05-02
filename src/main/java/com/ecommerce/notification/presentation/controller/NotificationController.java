@@ -30,7 +30,7 @@ public class NotificationController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Iterable<NotificationResponse>>> getMyNotifications(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal(expression = "id") UUID userId,
             @PageableDefault(size = 10) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.ok(getMyNotificationsUseCase.execute(userId, pageable)));
     }
@@ -38,7 +38,7 @@ public class NotificationController {
     @Operation(summary = "Get unread count")
     @GetMapping("/unread-count")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<Long>> getUnreadCount(@AuthenticationPrincipal UUID userId) {
+    public ResponseEntity<ApiResponse<Long>> getUnreadCount(@AuthenticationPrincipal(expression = "id") UUID userId) {
         return ResponseEntity.ok(ApiResponse.ok(getMyNotificationsUseCase.countUnread(userId)));
     }
 
@@ -46,7 +46,7 @@ public class NotificationController {
     @PatchMapping("/{id}/read")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> markAsRead(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal(expression = "id") UUID userId,
             @PathVariable UUID id) {
         markNotificationReadUseCase.execute(id, userId);
         return ResponseEntity.ok(ApiResponse.ok((Void) null));

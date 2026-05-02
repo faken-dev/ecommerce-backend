@@ -62,10 +62,10 @@ public class InventoryController {
     }
 
     @GetMapping("/seller/all")
-    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('inventory:read')")
     @Operation(summary = "List all inventory items for current seller (paginated)")
     public ResponseEntity<ApiResponse<Iterable<InventoryItemResponse>>> listMyInventory(
-            @AuthenticationPrincipal UUID sellerId,
+            @AuthenticationPrincipal(expression = "id") UUID sellerId,
             @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.ok(
                 inventoryItemRepository.findAllBySellerId(sellerId, pageable).map(this::mapToResponse)));

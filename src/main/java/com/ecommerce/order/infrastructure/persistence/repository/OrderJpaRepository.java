@@ -74,4 +74,7 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID> 
 
     @Query("SELECT SUM(o.totalAmount) FROM OrderJpaEntity o WHERE o.sellerId = :sellerId AND o.paymentStatus = 'PAID' AND o.createdAt >= :after AND o.deletedAt IS NULL")
     BigDecimal sumTotalAmountBySellerAfter(@Param("sellerId") UUID sellerId, @Param("after") Instant after);
+
+    @Query("SELECT SUM(o.totalAmount) FROM OrderJpaEntity o WHERE o.sellerId = :sellerId AND o.paymentStatus = 'PAID' AND o.createdAt BETWEEN :start AND :end AND o.deletedAt IS NULL")
+    BigDecimal sumTotalAmountBySellerBetween(@Param("sellerId") UUID sellerId, @Param("start") Instant start, @Param("end") Instant end);
 }

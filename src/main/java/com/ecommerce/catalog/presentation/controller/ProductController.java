@@ -105,7 +105,7 @@ public class ProductController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Slug conflict")
     })
     public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
-            @AuthenticationPrincipal UUID sellerId,
+            @AuthenticationPrincipal(expression = "id") UUID sellerId,
             @Valid @RequestBody CreateProductRequest req) {
         // Force sellerId from JWT token - prevents spoofing sellerId in body
         ProductResponse response = createProductUseCase.execute(
@@ -145,7 +145,7 @@ public class ProductController {
     @PreAuthorize("hasAuthority('product:read')")
     @Operation(summary = "List my products (seller dashboard)")
     public ResponseEntity<ApiResponse<List<ProductSummaryResponse>>> myProducts(
-            @AuthenticationPrincipal UUID sellerId,
+            @AuthenticationPrincipal(expression = "id") UUID sellerId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(searchProductsUseCase.bySeller(sellerId, page, size));

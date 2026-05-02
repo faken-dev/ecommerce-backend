@@ -65,7 +65,7 @@ public class VoucherController {
     @GetMapping("/validate")
     public ResponseEntity<ApiResponse<DiscountValidationResult>> validateVoucher(
             @RequestParam String code,
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal(expression = "id") UUID userId,
             @RequestParam(required = false) BigDecimal subtotal,
             @RequestParam(required = false) BigDecimal shippingFee,
             @RequestParam(required = false) Set<UUID> productIds,
@@ -95,7 +95,7 @@ public class VoucherController {
     @PreAuthorize("hasAuthority('voucher:apply')")
     public ResponseEntity<ApiResponse<DiscountValidationResult>> applyVoucher(
             @Valid @RequestBody ApplyVoucherRequest req,
-            @AuthenticationPrincipal UUID userId) {
+            @AuthenticationPrincipal(expression = "id") UUID userId) {
 
         ApplyVoucherCommand cmd = new ApplyVoucherCommand(
                 req.code(),
@@ -115,7 +115,7 @@ public class VoucherController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<VoucherResponse>> collectVoucher(
             @PathVariable String code,
-            @AuthenticationPrincipal UUID userId) {
+            @AuthenticationPrincipal(expression = "id") UUID userId) {
         return ResponseEntity.ok(ApiResponse.ok(collectVoucherUseCase.execute(code, userId)));
     }
 
@@ -125,7 +125,7 @@ public class VoucherController {
     public ResponseEntity<ApiResponse<Iterable<VoucherResponse>>> listMyCollectedVouchers(
             @RequestParam(defaultValue = "true") boolean activeOnly,
             @PageableDefault(size = 20) Pageable pageable,
-            @AuthenticationPrincipal UUID userId) {
+            @AuthenticationPrincipal(expression = "id") UUID userId) {
         return ResponseEntity.ok(ApiResponse.ok(getMyVouchersUseCase.execute(userId, activeOnly, pageable)));
     }
 
@@ -138,7 +138,7 @@ public class VoucherController {
     @PreAuthorize("hasAuthority('voucher:create')")
     public ResponseEntity<ApiResponse<VoucherResponse>> createVoucher(
             @Valid @RequestBody CreateVoucherRequest req,
-            @AuthenticationPrincipal UUID sellerId) {
+            @AuthenticationPrincipal(expression = "id") UUID sellerId) {
 
         CreateVoucherCommand cmd = new CreateVoucherCommand(
                 req.code(),
@@ -168,7 +168,7 @@ public class VoucherController {
     public ResponseEntity<ApiResponse<Iterable<VoucherResponse>>> listMyVouchers(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable,
-            @AuthenticationPrincipal UUID sellerId) {
+            @AuthenticationPrincipal(expression = "id") UUID sellerId) {
 
         VoucherStatus voucherStatus = status != null ? VoucherStatus.valueOf(status) : null;
         var page = (voucherStatus != null)
@@ -182,7 +182,7 @@ public class VoucherController {
     @PreAuthorize("hasAuthority('voucher:update')")
     public ResponseEntity<ApiResponse<VoucherResponse>> activateVoucher(
             @PathVariable UUID voucherId,
-            @AuthenticationPrincipal UUID sellerId) {
+            @AuthenticationPrincipal(expression = "id") UUID sellerId) {
         return ResponseEntity.ok(ApiResponse.ok(
                 updateVoucherUseCase.activate(voucherId, sellerId)));
     }
@@ -192,7 +192,7 @@ public class VoucherController {
     @PreAuthorize("hasAuthority('voucher:update')")
     public ResponseEntity<ApiResponse<VoucherResponse>> disableVoucher(
             @PathVariable UUID voucherId,
-            @AuthenticationPrincipal UUID sellerId) {
+            @AuthenticationPrincipal(expression = "id") UUID sellerId) {
         return ResponseEntity.ok(ApiResponse.ok(
                 updateVoucherUseCase.disable(voucherId, sellerId)));
     }
@@ -225,7 +225,7 @@ public class VoucherController {
     @PreAuthorize("hasAuthority('voucher:manage')")
     public ResponseEntity<ApiResponse<VoucherResponse>> expireVoucher(
             @PathVariable UUID voucherId,
-            @AuthenticationPrincipal UUID adminId) {
+            @AuthenticationPrincipal(expression = "id") UUID adminId) {
         return ResponseEntity.ok(ApiResponse.ok(
                 updateVoucherUseCase.expire(voucherId, adminId)));
     }

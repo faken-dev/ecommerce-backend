@@ -32,14 +32,14 @@ public class UserController {
     @GetMapping
     @Operation(summary = "Get current user's profile")
     public ResponseEntity<ApiResponse<ProfileResponse>> getProfile(
-            @AuthenticationPrincipal UUID userId) {
+            @AuthenticationPrincipal(expression = "id") UUID userId) {
         return ResponseEntity.ok(ApiResponse.ok(getProfileUseCase.execute(userId)));
     }
 
     @PutMapping
     @Operation(summary = "Update current user's profile")
     public ResponseEntity<ApiResponse<ProfileResponse>> updateProfile(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal(expression = "id") UUID userId,
             @Valid @RequestBody UpdateProfileRequest req) {
         ProfileResponse profile = updateProfileUseCase.execute(userId,
                 new UpdateProfileCommand(
@@ -54,7 +54,7 @@ public class UserController {
     @PutMapping("/avatar")
     @Operation(summary = "Update avatar URL directly")
     public ResponseEntity<ApiResponse<ProfileResponse>> updateAvatar(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal(expression = "id") UUID userId,
             @Valid @RequestBody UpdateAvatarRequest req) {
         ProfileResponse profile = updateAvatarUseCase.execute(userId,
                 new UpdateAvatarCommand(req.avatarUrl()));

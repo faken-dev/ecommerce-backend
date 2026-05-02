@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/admin/audit-logs")
 @RequiredArgsConstructor
 @Tag(name = "Audit Logs", description = "Admin audit log management")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAuthority('audit:read')")
 public class AuditLogController {
 
     private final AuditLogRepository auditLogRepository;

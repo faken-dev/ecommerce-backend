@@ -36,14 +36,14 @@ public class AddressController {
     @GetMapping
     @Operation(summary = "Get all addresses for current user")
     public ResponseEntity<ApiResponse<List<AddressResponse>>> getAddresses(
-            @AuthenticationPrincipal UUID userId) {
+            @AuthenticationPrincipal(expression = "id") UUID userId) {
         return ResponseEntity.ok(ApiResponse.ok(getAddressesUseCase.execute(userId)));
     }
 
     @PostMapping
     @Operation(summary = "Create a new address")
     public ResponseEntity<ApiResponse<AddressResponse>> createAddress(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal(expression = "id") UUID userId,
             @Valid @RequestBody CreateAddressRequest req) {
         AddressResponse address = createAddressUseCase.execute(userId,
                 new CreateAddressCommand(
@@ -62,7 +62,7 @@ public class AddressController {
     @PutMapping("/{addressId}")
     @Operation(summary = "Update an existing address")
     public ResponseEntity<ApiResponse<AddressResponse>> updateAddress(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal(expression = "id") UUID userId,
             @PathVariable UUID addressId,
             @Valid @RequestBody UpdateAddressRequest req) {
         AddressResponse address = updateAddressUseCase.execute(userId, addressId,
@@ -79,7 +79,7 @@ public class AddressController {
     @DeleteMapping("/{addressId}")
     @Operation(summary = "Delete an address")
     public ResponseEntity<ApiResponse<Void>> deleteAddress(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal(expression = "id") UUID userId,
             @PathVariable UUID addressId) {
         deleteAddressUseCase.execute(userId, addressId);
         return ResponseEntity.ok(ApiResponse.ok(null, "Address deleted successfully"));
@@ -88,7 +88,7 @@ public class AddressController {
     @PutMapping("/{addressId}/default")
     @Operation(summary = "Set an address as the default address")
     public ResponseEntity<ApiResponse<AddressResponse>> setDefaultAddress(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal(expression = "id") UUID userId,
             @PathVariable UUID addressId) {
         return ResponseEntity.ok(ApiResponse.ok(
                 setDefaultAddressUseCase.execute(userId, addressId),

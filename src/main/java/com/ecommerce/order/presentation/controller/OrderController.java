@@ -43,7 +43,7 @@ public class OrderController {
     @PreAuthorize("hasAuthority('order:create')")
     public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
             @Valid @RequestBody CreateOrderRequest req,
-            @AuthenticationPrincipal UUID buyerId,
+            @AuthenticationPrincipal(expression = "id") UUID buyerId,
             HttpServletRequest httpRequest) {
 
         String ipAddress = resolveIp(httpRequest);
@@ -83,7 +83,7 @@ public class OrderController {
     @PreAuthorize("hasAuthority('order:read')")
     public ResponseEntity<ApiResponse<OrderResponse>> getOrder(
             @PathVariable UUID orderId,
-            @AuthenticationPrincipal UUID currentUserId) {
+            @AuthenticationPrincipal(expression = "id") UUID currentUserId) {
         return ResponseEntity.ok(ApiResponse.ok(
                 getOrderUseCase.execute(orderId, currentUserId, currentUserId)));
     }
@@ -94,7 +94,7 @@ public class OrderController {
     public ResponseEntity<ApiResponse<Iterable<OrderSummaryResponse>>> listMyOrders(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable,
-            @AuthenticationPrincipal UUID buyerId) {
+            @AuthenticationPrincipal(expression = "id") UUID buyerId) {
         return ResponseEntity.ok(ApiResponse.ok(
                 listOrdersUseCase.execute(buyerId, status, pageable)));
     }
@@ -105,7 +105,7 @@ public class OrderController {
     public ResponseEntity<ApiResponse<OrderResponse>> cancelOrder(
             @PathVariable UUID orderId,
             @Valid @RequestBody(required = false) CancelOrderRequest req,
-            @AuthenticationPrincipal UUID buyerId) {
+            @AuthenticationPrincipal(expression = "id") UUID buyerId) {
         return ResponseEntity.ok(ApiResponse.ok(
                 cancelOrderUseCase.execute(
                         new CancelOrderCommand(orderId, req != null ? req.reason() : null),
@@ -118,7 +118,7 @@ public class OrderController {
     public ResponseEntity<ApiResponse<Iterable<OrderSummaryResponse>>> listSellerOrders(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable,
-            @AuthenticationPrincipal UUID sellerId) {
+            @AuthenticationPrincipal(expression = "id") UUID sellerId) {
         return ResponseEntity.ok(ApiResponse.ok(
                 listOrdersUseCase.executeForSeller(sellerId, status, pageable)));
     }
@@ -129,7 +129,7 @@ public class OrderController {
     public ResponseEntity<ApiResponse<OrderResponse>> updateOrderStatus(
             @PathVariable UUID orderId,
             @Valid @RequestBody UpdateOrderStatusRequest req,
-            @AuthenticationPrincipal UUID changedBy,
+            @AuthenticationPrincipal(expression = "id") UUID changedBy,
             @RequestParam String changedByRole) {
         return ResponseEntity.ok(ApiResponse.ok(
                 updateOrderStatusUseCase.execute(
@@ -144,7 +144,7 @@ public class OrderController {
     public ResponseEntity<ApiResponse<OrderResponse>> sellerCancelOrder(
             @PathVariable UUID orderId,
             @Valid @RequestBody(required = false) CancelOrderRequest req,
-            @AuthenticationPrincipal UUID sellerId) {
+            @AuthenticationPrincipal(expression = "id") UUID sellerId) {
         return ResponseEntity.ok(ApiResponse.ok(
                 cancelOrderUseCase.execute(
                         new CancelOrderCommand(orderId, req != null ? req.reason() : null),
@@ -166,7 +166,7 @@ public class OrderController {
     @PreAuthorize("hasAuthority('order:manage')")
     public ResponseEntity<ApiResponse<OrderResponse>> getAdminOrder(
             @PathVariable UUID orderId,
-            @AuthenticationPrincipal UUID adminId) {
+            @AuthenticationPrincipal(expression = "id") UUID adminId) {
         return ResponseEntity.ok(ApiResponse.ok(
                 getOrderUseCase.execute(orderId, adminId, null))); 
     }
@@ -177,7 +177,7 @@ public class OrderController {
     public ResponseEntity<ApiResponse<OrderResponse>> updateAdminOrderStatus(
             @PathVariable UUID orderId,
             @Valid @RequestBody UpdateOrderStatusRequest req,
-            @AuthenticationPrincipal UUID adminId) {
+            @AuthenticationPrincipal(expression = "id") UUID adminId) {
         return ResponseEntity.ok(ApiResponse.ok(
                 updateOrderStatusUseCase.execute(
                         new UpdateOrderStatusCommand(
@@ -191,7 +191,7 @@ public class OrderController {
     public ResponseEntity<ApiResponse<OrderResponse>> adminCancelOrder(
             @PathVariable UUID orderId,
             @Valid @RequestBody(required = false) CancelOrderRequest req,
-            @AuthenticationPrincipal UUID adminId) {
+            @AuthenticationPrincipal(expression = "id") UUID adminId) {
         return ResponseEntity.ok(ApiResponse.ok(
                 cancelOrderUseCase.execute(
                         new CancelOrderCommand(orderId, req != null ? req.reason() : null),
